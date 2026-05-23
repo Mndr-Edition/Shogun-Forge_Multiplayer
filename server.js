@@ -1,11 +1,20 @@
 // === server.js ===
+const express = require('express'); // Добавили
+const http = require('http'); // Добавили
 const WebSocket = require('ws');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
 
+const app = express(); // Инициализация express
 const PORT = process.env.PORT || 5000;
 const DB_FILE = path.join(__dirname, 'server_db.json');
+
+// Добавляем раздачу статики (html, css, js)
+app.use(express.static(__dirname));
+
+// Создаем HTTP-сервер
+const server = http.createServer(app);
 
 // --- Инициализация простейшей БД ---
 let db = { players: {} };
@@ -24,9 +33,8 @@ const saveDB = () => {
 // Хранилище активных соединений сокетов: [id] = ws
 const clients = new Map();
 
-const wss = new WebSocket.Server({ port: PORT }, () => {
-    console.log(`[СЕРВЕР] Запущен на порту ${PORT}`);
-});
+// ПРИВЯЗЫВАЕМ СОКЕТЫ К HTTP СЕРВЕРУ
+const wss = new WebSocket.Server({ server });
 
 // --- Глобальный игровой цикл (раз в секунду) ---
 setInterval(() => {
@@ -233,11 +241,10 @@ wss.on('connection', (ws) => {
             console.error("[СЕТЬ] Ошибка обработки сообщения сокета:", err);
         }
     });
-
-    ws.on('close', () => {
-        if (clientId) {
-            console.log(`[СЕТЬ] Соединение закрыто для ID: ${clientId}`);
-            clients.delete(clientId);
-        }
-    });
+    
 });
+
+server.listen(PORT, () => {
+    console.log(`[СЕРВЕР] Слушаю порт ${PORT}`);
+});
+
