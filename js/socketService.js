@@ -1,11 +1,12 @@
 // === js/socketService.js ===
-import { state } from './state.js';
+// УДАЛИ ИМПОРТ STATE ОТСЮДА!
 
 export const socketService = {
     ws: null,
     
     init() {
-        this.ws = new WebSocket(`ws://${window.location.hostname}:5000`);
+        // Если сервер на другом домене (Render), замени window.location.hostname
+        this.ws = new WebSocket('wss://shogun-forge-multiplayer.onrender.com');
         
         this.ws.onmessage = (event) => {
             const { type, payload } = JSON.parse(event.data);
@@ -14,27 +15,36 @@ export const socketService = {
     },
     
     handleMessage(type, payload) {
+        // Используем window.state, который мы объявили глобально
+        if (!window.state) return;
+
         switch (type) {
             case 'SERVER_STATE_SYNC':
             case 'SERVER_TICK':
-                state.syncWithServer(payload.serverData || payload);
+                window.state.syncWithServer(payload.serverData || payload);
                 break;
             case 'SERVER_BATTLE_RESULT':
-                // Тут триггерится показ окна с результатами боя
                 console.log('Результат боя:', payload);
                 break;
             case 'SERVER_COMBAT_LOG':
-                // Логика запуска комбат-движка по команде сервера
+                // Логика запуска комбат-движка
                 break;
             case 'SERVER_LEADERBOARD_DATA':
-                // Обновление UI лидерборда
+                // Здесь можешь дернуть leaderboardService, если он глобален, 
+                // или через window.leaderboardService
                 break;
         }
     },
     
-    send(type, payload) {
-        if (this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({ type, payload }));
-        }
+send(type, payload) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type, payload }));
+    } else if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
+        // Очередь или повтор: ждем 500мс и пробуем еще раз
+        console.log('[СЕТЬ] Сокет соединяется, ждем...');
+        setTimeout(() => this.send(type, payload), 500);
+    } else {
+        console.warn('[СЕТЬ] Сокет закрыт или не инициализирован:', type);
     }
+}
 };

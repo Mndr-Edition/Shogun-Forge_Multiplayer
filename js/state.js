@@ -7,6 +7,7 @@ import { combatLogic } from './combat.js';
 import { leaderboardService } from './leaderboard.js';
 import { barracksLogic } from './barracks.js';
 import { UNITS_CONFIG } from './units.js';
+// ДОБАВЬ ЭТУ СТРОКУ:
 
 const formatSengokuDate = (totalDays) => {
     let year = 1467;
@@ -83,18 +84,14 @@ export const state = {
     data: { ...DEFAULT_STATE },
 
     init() {
-        // 2. Пытаемся подгрузить старый сейв (если нужно для оффлайна), 
-        // но приоритет — дефолт, если сейв битый
-        const saved = db.load(); 
-        if (saved) {
-            // Глубокое слияние, чтобы не потерять поля, если структура сейва устарела
-            this.data = { ...DEFAULT_STATE, ...saved };
-        }
-        
-        // 3. Запуск сокетов и UI
-        socketService.init();
-        this.updateUI();
-    },
+    const saved = db.load(); 
+    if (saved) {
+        this.data = { ...DEFAULT_STATE, ...saved };
+    }
+    
+    // УДАЛИ СТРОКУ socketService.init(); ОТСЮДА!
+    this.updateUI();
+},
 
     // Дальше методы продолжаются внутри объекта state
 
@@ -103,7 +100,7 @@ export const state = {
         addGold(amount) {
         // Шлем запрос на сервер, чтобы он проверил возможность начисления
         // и обновил баланс в БД. Если это клик — шлем CLIENT_CLICK_GOLD
-        socketService.send('CLIENT_CLICK_GOLD', { amount });
+        window.socketService.send('CLIENT_CLICK_GOLD', { amount });
     },
 
 
@@ -123,7 +120,7 @@ export const state = {
         if (this.data.gold < cost) return alert("Недостаточно золота для найма!");
 
         // Вместо прямого изменения данных — запрос к серверу
-        socketService.send('CLIENT_BUY_UNIT', { 
+        window.socketService.send('CLIENT_BUY_UNIT', { 
             type: type, 
             cost: cost 
         });
@@ -156,7 +153,7 @@ export const state = {
         if (this.data.gold < cost) return alert("Недостаточно золота для технологического апгрейда!");
 
         // Отправляем запрос на сервер
-        socketService.send('CLIENT_UPGRADE_TECH', { 
+        window.socketService.send('CLIENT_UPGRADE_TECH', { 
             type: type, 
             cost: cost 
         });
@@ -176,7 +173,7 @@ export const state = {
         }
 
         // Шлем команду серверу
-        socketService.send('CLIENT_TOGGLE_UNIT', { 
+        window.socketService.send('CLIENT_TOGGLE_UNIT', { 
             type: type, 
             isDeploy: isDeploy 
         });
@@ -220,12 +217,12 @@ export const state = {
     const cost = this.getBuildingCost(id);
     if (this.data.gold < cost) return alert("Недостаточно золота!");
 
-    socketService.send('CLIENT_BUY_BUILDING', { buildingId: id, cost: cost });
+    window.socketService.send('CLIENT_BUY_BUILDING', { buildingId: id, cost: cost });
 },
 
 
         clearActiveArmy() {
-    socketService.send('CLIENT_CLEAR_ARMY', {});
+    window.socketService.send('CLIENT_CLEAR_ARMY', {});
 },
 
 
@@ -254,7 +251,7 @@ export const state = {
         if (this.data.gold < cost) return alert("Недостаточно золота для крафта!");
 
         // Отправляем запрос серверу
-        socketService.send('CLIENT_CRAFT_WEAPON', { techLevel });
+        window.socketService.send('CLIENT_CRAFT_WEAPON', { techLevel });
     },
 
     
@@ -308,7 +305,7 @@ export const state = {
 
             SellItemToMarket(id) {
     // Убираем лишнюю локальную проверку, если сервер всё равно её делает
-    socketService.send('CLIENT_SELL_ITEM', { id: id });
+    window.socketService.send('CLIENT_SELL_ITEM', { id: id });
 },
 
 
@@ -319,13 +316,13 @@ export const state = {
     const price = this.calculateSystemItemPrice(slot.item);
     if (this.data.gold < price) return alert("Недостаточно золота!");
 
-    socketService.send('CLIENT_BUY_SYSTEM_ITEM', { index });
+    window.socketService.send('CLIENT_BUY_SYSTEM_ITEM', { index });
 },
 
 
         StartBattle(stage) {
         // ... проверки перед боем ...
-        socketService.send('CLIENT_START_BATTLE', { stage });
+        window.socketService.send('CLIENT_START_BATTLE', { stage });
     },
 
 
@@ -334,7 +331,7 @@ export const state = {
         if (totalUnits === 0) return alert("Твоя армия пуста!");
 
         // Отправляем команду серверу
-        socketService.send('CLIENT_START_CAMPAIGN', { stage: this.data.stage || 1 });
+        window.socketService.send('CLIENT_START_CAMPAIGN', { stage: this.data.stage || 1 });
     },
 
 
@@ -673,7 +670,7 @@ export const state = {
                 <button class="sell-btn btn danger" style="margin-top:10px;">Продать</button>
             `;
             
-            card.querySelector('.sell-btn').addEventListener('click', () => this.sellItemToMarket(item.id));
+            card.querySelector('.sell-btn').addEventListener('click', () => this.SellItemToMarket(item.id));
             grid.appendChild(card);
         });
     },
@@ -729,3 +726,4 @@ const price = Math.floor(rawPrice * this.getHarbourPriceMultiplier());
         }
     }
 };
+window.state = state;

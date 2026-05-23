@@ -2,7 +2,12 @@
 import { state } from './state.js';
 import { combatLogic } from './combat.js';
 import { leaderboardService } from './leaderboard.js';
-import { socketService } from './network.js'; // Подключаем реальный сетевой слой
+import { socketService } from './socketService.js';
+
+window.state = state;
+window.socketService = socketService;
+window.combatLogic = combatLogic;
+window.leaderboardService = leaderboardService;
 
 document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
@@ -14,24 +19,35 @@ bgMusic.loop = true;
 bgMusic.volume = 0.4;
 
     const startAudio = () => {
-        if (!bgMusic.paused) return; 
+        // Добавляем проверку, чтобы не вызывать play() без необходимости
+        if (!bgMusic || bgMusic.playing) return; 
+        
         bgMusic.play()
             .then(() => {
                 console.log("Аудио поток успешно запущен.");
+                // Удаляем слушатели, чтобы не засорять память
                 document.removeEventListener('click', startAudio);
                 document.removeEventListener('touchstart', startAudio);
             })
-            .catch(err => console.error("Ошибка воспроизведения:", err));
+            .catch(err => {
+                // Если это ошибка "NotAllowedError", игнорируем её, 
+                // так как она ожидаема до первого клика
+                if (err.name !== 'NotAllowedError') {
+                    console.error("Ошибка воспроизведения:", err);
+                }
+            });
     };
     
+    // Оставляем слушатели
     document.addEventListener('click', startAudio);
     document.addEventListener('touchstart', startAudio);
 
     // ==========================================
     // 1. Инициализация локального стейта и сети
     // ==========================================
+    socketService.init();
     state.init();
-    socketService.init(); // Поднимаем WebSocket-соединение
+     // Поднимаем WebSocket-соединение
     
     // Налоги отправляем на сервер. Сервер валидирует диапазон и применяет к сессии игрока.
     document.getElementById('tax-slider')?.addEventListener('input', (e) => {
