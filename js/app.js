@@ -2,7 +2,7 @@
 import { state } from './state.js';
 import { combatLogic } from './combat.js';
 import { leaderboardService } from './leaderboard.js';
-import { socketService } from './socketService.js';
+import { socketService } from './network.js';
 
 window.state = state;
 window.socketService = socketService;
@@ -14,31 +14,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // ЗВУКОВОЙ ДВИЖОК
     // ==========================================
     const musicUrl = 'https://raw.githubusercontent.com/Mndr-Edition/Sprites/main/%5Bnoloop%5DOblivion.ogg';
-let bgMusic = new Audio(musicUrl); 
-bgMusic.loop = true;
-bgMusic.volume = 0.4;
+    let bgMusic = new Audio(musicUrl); 
+    bgMusic.loop = true;
+    bgMusic.volume = 0.4;
+    let isMusicPlaying = false;
 
     const startAudio = () => {
-        // Добавляем проверку, чтобы не вызывать play() без необходимости
-        if (!bgMusic || bgMusic.playing) return; 
+        if (isMusicPlaying) return; 
         
         bgMusic.play()
             .then(() => {
                 console.log("Аудио поток успешно запущен.");
-                // Удаляем слушатели, чтобы не засорять память
+                isMusicPlaying = true;
                 document.removeEventListener('click', startAudio);
                 document.removeEventListener('touchstart', startAudio);
             })
             .catch(err => {
-                // Если это ошибка "NotAllowedError", игнорируем её, 
-                // так как она ожидаема до первого клика
                 if (err.name !== 'NotAllowedError') {
                     console.error("Ошибка воспроизведения:", err);
                 }
             });
     };
     
-    // Оставляем слушатели
     document.addEventListener('click', startAudio);
     document.addEventListener('touchstart', startAudio);
 
@@ -47,9 +44,21 @@ bgMusic.volume = 0.4;
     // ==========================================
     socketService.init();
     state.init();
-     // Поднимаем WebSocket-соединение
     
-    // Налоги отправляем на сервер. Сервер валидирует диапазон и применяет к сессии игрока.
+    // Принудительно генерируем / получаем имя игрока для авторизации
+    const playerName = localStorage.getItem('shogun_name') || "Daimyo_" + Math.floor(Math.random() * 1000);
+    localStorage.setItem('shogun_name', playerName);
+
+    // Экспонируем хэндлер авторизации в window, чтобы network.js мог вызвать его строго в onopen
+    window.authPlayerSession = () => {
+        socketService.send('CLIENT_AUTH', { 
+            name: playerName,
+            localData: state.data 
+        });
+        console.log("[АП] Сессия авторизована через WebSocket для:", playerName);
+    };
+
+    // Налоги отправляем на сервер при изменении ползунка
     document.getElementById('tax-slider')?.addEventListener('input', (e) => {
         const rate = parseInt(e.target.value);
         const taxValEl = document.getElementById('tax-val');
@@ -59,16 +68,16 @@ bgMusic.volume = 0.4;
     });
 
     // ==========================================
-    // 2. Игровые триггеры (Отправка интентов на сервер)
+    // 2. Игровые триггеры
     // ==========================================
     document.getElementById('click-btn')?.addEventListener('click', () => {
-        // Сервер сам посчитает силу клика по уровню кузницы в БД
-        socketService.send('CLIENT_CLICK_GOLD');
+        // Вызываем метод стейта, инкапсулирующий отправку клика
+        state.addGold(state.data.clickPower || 1);
     });
 
     document.getElementById('forge-btn')?.addEventListener('click', () => {
-        // Запрос на крафт. Сервер проверит ресурсы и вернет результат
-        socketService.send('CLIENT_CRAFT_REQUEST');
+        // Вызываем метод крафта из стейта, где проверяется золото
+        state.Craft();
     });
 
     // ==========================================
@@ -83,14 +92,14 @@ bgMusic.volume = 0.4;
 
     document.getElementById('start-campaign-btn')?.addEventListener('click', () => {
         hideCombatPlaceholder();
-        // Запрос серверу на симуляцию кампании
-        socketService.send('CLIENT_START_CAMPAIGN');
+        // Запуск через метод стейта с валидацией армии
+        state.StartCampaign();
     });
 
     document.getElementById('start-duel-btn')?.addEventListener('click', () => {
         hideCombatPlaceholder();
-        // Передаем null, чтобы сервер подобрал случайного оппонента из базы данных
-        socketService.send('CLIENT_START_DUEL', { targetPlayerId: null });
+        // Запуск асинхронного дуэльного цикла с поиском оппонента из state.js
+        state.startDuel();
     });
 
     // ==========================================
@@ -115,10 +124,9 @@ bgMusic.volume = 0.4;
                 });
                 
                 document.getElementById(tab.btn)?.classList.add('active');
-                document.getElementById(tab.screen)?.classList.add('active');
+                document.getElementById(tab.screen)?.active || document.getElementById(tab.screen)?.classList.add('active');
 
                 if (tab.id === 'leaderboard') {
-                    // Запрашиваем актуальный топ у сервера при открытии вкладки
                     socketService.send('CLIENT_REQ_LEADERBOARD');
                 }
 

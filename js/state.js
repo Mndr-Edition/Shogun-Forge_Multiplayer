@@ -7,7 +7,6 @@ import { combatLogic } from './combat.js';
 import { leaderboardService } from './leaderboard.js';
 import { barracksLogic } from './barracks.js';
 import { UNITS_CONFIG } from './units.js';
-// ДОБАВЬ ЭТУ СТРОКУ:
 
 const formatSengokuDate = (totalDays) => {
     let year = 1467;
@@ -66,8 +65,8 @@ const DEFAULT_STATE = {
     population: 100,
     daysPassed: 0, 
     buildings: {
-      harbour: false, 
-      harbourLevel: 0,
+        harbour: false, 
+        harbourLevel: 0,
         forge: false,
         forgeLevel: 0,
         goldmine: false,
@@ -80,29 +79,23 @@ const DEFAULT_STATE = {
 };
 
 export const state = {
-    // 1. Инициализируем дефолтом, чтобы методы не крашились до коннекта
     data: { ...DEFAULT_STATE },
 
     init() {
-    const saved = db.load(); 
-    if (saved) {
-        this.data = { ...DEFAULT_STATE, ...saved };
-    }
-    
-    // УДАЛИ СТРОКУ socketService.init(); ОТСЮДА!
-    this.updateUI();
-},
-
-    // Дальше методы продолжаются внутри объекта state
-
-
-
-        addGold(amount) {
-        // Шлем запрос на сервер, чтобы он проверил возможность начисления
-        // и обновил баланс в БД. Если это клик — шлем CLIENT_CLICK_GOLD
-        window.socketService.send('CLIENT_CLICK_GOLD', { amount });
+        const saved = db.load(); 
+        if (saved) { this.data = { ...DEFAULT_STATE, ...saved }; }
+        
+        if (window.socketService?.ws?.readyState === WebSocket.OPEN) {
+            window.socketService.authenticate();
+        } else {
+            console.log("[СТЭЙТ] Сокет еще закрыт, ждем onopen...");
+        }
+        this.updateUI();
     },
 
+    addGold(amount) {
+        window.socketService.send('CLIENT_CLICK_GOLD', { amount });
+    },
 
     getUnitCost(type) {
         const cfg = UNITS_CONFIG.types[type];
@@ -111,23 +104,20 @@ export const state = {
         return Math.floor(cfg.baseCost * Math.pow(cfg.multiplier, currentCount));
     },
 
-            buyUnit(type) {
-        // Локальная проверка (экономим трафик)
+    buyUnit(type) {
         const lockStatus = this.checkUnitUnlock(type);
         if (!lockStatus.unlocked) return alert(`Найма нет! ${lockStatus.reason}`);
 
         const cost = this.getUnitCost(type);
         if (this.data.gold < cost) return alert("Недостаточно золота для найма!");
 
-        // Вместо прямого изменения данных — запрос к серверу
         window.socketService.send('CLIENT_BUY_UNIT', { 
             type: type, 
             cost: cost 
         });
     },
 
-
-        upgradeUnitTech(type) {
+    upgradeUnitTech(type) {
         const currentLevel = this.data.unitTech[type] || 1;
         if (UNITS_CONFIG.maxTechLevel && currentLevel >= UNITS_CONFIG.maxTechLevel) {
             return alert("Достигнут максимальный уровень технологии!");
@@ -152,15 +142,13 @@ export const state = {
         const cost = currentLevel * 1500;
         if (this.data.gold < cost) return alert("Недостаточно золота для технологического апгрейда!");
 
-        // Отправляем запрос на сервер
         window.socketService.send('CLIENT_UPGRADE_TECH', { 
             type: type, 
             cost: cost 
         });
     },
 
-    
-        toggleUnitToArmy(type, isDeploy) {
+    toggleUnitToArmy(type, isDeploy) {
         const totalActive = Object.values(this.data.army).reduce((sum, count) => sum + count, 0);
         const inReserve = this.data.reserve[type] || 0;
         const inArmy = this.data.army[type] || 0;
@@ -172,14 +160,12 @@ export const state = {
             if (inArmy <= 0) return;
         }
 
-        // Шлем команду серверу
         window.socketService.send('CLIENT_TOGGLE_UNIT', { 
             type: type, 
             isDeploy: isDeploy 
         });
     },
 
-    
     getBuildingDiscount() {
         const campLvl = this.data.buildings?.lumbercampLevel || 0;
         const discount = campLvl * 0.05; 
@@ -198,7 +184,7 @@ export const state = {
         return Math.floor(rawCost * this.getBuildingDiscount());
     },
     
-        getHarbourTimeMultiplier() {
+    getHarbourTimeMultiplier() {
         const harbourLvl = this.data.buildings?.harbourLevel || 0;
         return Math.pow(0.92, harbourLvl); 
     },
@@ -208,23 +194,20 @@ export const state = {
         return Math.max(0.70, 1.0 - (harbourLvl * 0.03));
     },
 
-        upgradeBuilding(id) {
-    const isOwned = this.data.buildings[id];
-    const currentLvl = this.data.buildings[`${id}Level`] || 0;
-    if (isOwned && currentLvl >= 10) return alert("Максимальный уровень!");
-    
-    // Локальная проверка стоимости перед запросом
-    const cost = this.getBuildingCost(id);
-    if (this.data.gold < cost) return alert("Недостаточно золота!");
+    upgradeBuilding(id) {
+        const isOwned = this.data.buildings[id];
+        const currentLvl = this.data.buildings[`${id}Level`] || 0;
+        if (isOwned && currentLvl >= 10) return alert("Максимальный уровень!");
+        
+        const cost = this.getBuildingCost(id);
+        if (this.data.gold < cost) return alert("Недостаточно золота!");
 
-    window.socketService.send('CLIENT_BUY_BUILDING', { buildingId: id, cost: cost });
-},
+        window.socketService.send('CLIENT_BUY_BUILDING', { buildingId: id, cost: cost });
+    },
 
-
-        clearActiveArmy() {
-    window.socketService.send('CLIENT_CLEAR_ARMY', {});
-},
-
+    clearActiveArmy() {
+        window.socketService.send('CLIENT_CLEAR_ARMY', {});
+    },
 
     getItemInflationMultiplier(itemType) {
         if (!this.data.market || !this.data.market.playerSlots) return 1.0;
@@ -238,24 +221,20 @@ export const state = {
         return Math.floor(item.basePrice * multiplier);
     },
     
-        getMaxPopulation() {
+    getMaxPopulation() {
         const riceLvl = this.data.buildings?.ricefieldLevel || 0;
         return 1000000 + (riceLvl * 1400000);
     },
 
-
-        Craft() {
+    Craft() {
         const techLevel = this.data.buildings?.forgeLevel || 1;
         const cost = forge.getCost(techLevel);
         
         if (this.data.gold < cost) return alert("Недостаточно золота для крафта!");
 
-        // Отправляем запрос серверу
         window.socketService.send('CLIENT_CRAFT_WEAPON', { techLevel });
     },
 
-    
-        // Метод внутри объекта state {}
     checkUnitUnlock(type) {
         const cfg = UNITS_CONFIG.types[type];
         if (!cfg) return { unlocked: false, reason: "Неизвестный юнит" };
@@ -263,39 +242,31 @@ export const state = {
         const tags = cfg.tags;
         const b = this.data.buildings;
 
-        // 1. Осада (Пушка, Мангонель) -> Требует Кузницу 5+ уровня
         if (tags.includes('siege')) {
             if (!b.forge || (b.forgeLevel < 5)) {
                 return { unlocked: false, reason: "Требуется КУЗНИЦА СЁГУНАТА 5 уровня!" };
             }
         }
-        // 2. Герои -> Требует Школу Дзюдзюцу
-        if (tags.includes('elite') && !tags.includes('cavalry')) { // Исключаем конницу с тегом elite
+        if (tags.includes('elite') && !tags.includes('cavalry')) {
             if (!b.jujutsu_dojo) return { unlocked: false, reason: "Требуется ШКОЛА ДЗЮДЗЮЦУ!" };
         }
-        // 3. Монахи -> Монастырь
         if (tags.includes('monk')) {
             if (!b.temple) return { unlocked: false, reason: "Требуется МОНАСТЫРЬ СОХЕЕВ!" };
         }
-        // 4. Ниндзя -> Додзё Ниндзя
         if (tags.includes('ninja')) {
             if (!b.ninjutsu_dojo) return { unlocked: false, reason: "Требуется СКРЫТОЕ ДОДЗЁ НИНДЗЯ!" };
         }
-        // 5. Кавалерия -> Конюшни
         if (tags.includes('cavalry')) {
             if (!b.stable) return { unlocked: false, reason: "Требуются ВОЕННЫЕ КОНЮШНИ!" };
         }
-        // 6. Огнестрел (Аркебузиры) -> Требует Додзё Лучников 5+ уровня
         if (tags.includes('matchclock')) {
             if (!b.archer_dojo || (b.archer_dojoLevel < 5)) {
                 return { unlocked: false, reason: "Требуется ДОДЗЁ ЛУЧНИКОВ 5 уровня!" };
             }
         }
-        // 7. Лучники -> Додзё Лучников
         if (tags.includes('bow')) {
             if (!b.archer_dojo) return { unlocked: false, reason: "Требуется ДОДЗЁ ЛУЧНИКОВ!" };
         }
-        // 8. Базовые мечники / копейщики (Асигару/Самураи с катанами и копьями)
         if (tags.includes('katana') || tags.includes('spear')) {
             if (!b.sword_dojo) return { unlocked: false, reason: "Требуется ШКОЛА КЕНДЗЮЦУ!" };
         }
@@ -303,96 +274,30 @@ export const state = {
         return { unlocked: true };
     },
 
-            SellItemToMarket(id) {
-    // Убираем лишнюю локальную проверку, если сервер всё равно её делает
-    window.socketService.send('CLIENT_SELL_ITEM', { id: id });
-},
+    SellItemToMarket(id) {
+        window.socketService.send('CLIENT_SELL_ITEM', { id: id });
+    },
 
+    BuySystemItem(index) {
+        const slot = this.data.market.systemSlots[index];
+        if (!slot || !slot.item) return;
+        
+        const price = Math.floor(slot.item.basePrice * 1.5 * this.getHarbourPriceMultiplier());
+        if (this.data.gold < price) return alert("Недостаточно золота!");
 
-            BuySystemItem(index) {
-    const slot = this.data.market.systemSlots[index];
-    if (!slot || !slot.item) return;
-    
-    const price = this.calculateSystemItemPrice(slot.item);
-    if (this.data.gold < price) return alert("Недостаточно золота!");
+        window.socketService.send('CLIENT_BUY_SYSTEM_ITEM', { index });
+    },
 
-    window.socketService.send('CLIENT_BUY_SYSTEM_ITEM', { index });
-},
-
-
-        StartBattle(stage) {
-        // ... проверки перед боем ...
+    StartBattle(stage) {
         window.socketService.send('CLIENT_START_BATTLE', { stage });
     },
 
-
-                StartCampaign() {
+    StartCampaign() {
         const totalUnits = Object.values(this.data.army).reduce((a, b) => a + b, 0);
         if (totalUnits === 0) return alert("Твоя армия пуста!");
 
-        // Отправляем команду серверу
         window.socketService.send('CLIENT_START_CAMPAIGN', { stage: this.data.stage || 1 });
     },
-
-
-    async startDuel() {
-        const totalUnits = Object.values(this.data.army).reduce((a, b) => a + b, 0);
-        if (totalUnits === 0) return alert("У тебя нет армии!");
-
-        const btn = document.getElementById('start-duel-btn');
-        if (btn) btn.disabled = true;
-
-        const duelMeta = document.getElementById('duel-enemy-meta');
-        if (duelMeta) duelMeta.style.display = 'flex';
-        
-        const statusEl = document.getElementById('battle-status');
-        document.getElementById('enemy-name').textContent = "Поиск...";
-        statusEl.textContent = "Запрос к серверу...";
-
-        try {
-            const opponent = await leaderboardService.fetchOpponent();
-            document.getElementById('enemy-name').textContent = opponent.name;
-            statusEl.textContent = "Соперник найден! Дуэль начинается...";
-
-            const playerArmy = Object.entries(this.data.army).map(([type, count]) => ({
-                type, count
-            })).filter(u => u.count > 0);
-
-            const enemyArmy = Object.entries(opponent.army || {}).map(([type, count]) => ({
-                type, count
-            })).filter(u => u.count > 0);
-
-            if (enemyArmy.length === 0) {
-                enemyArmy.push({ type: Object.keys(UNITS_CONFIG.types)[0], count: 5 });
-            }
-
-            combatLogic.start(
-                playerArmy,
-                enemyArmy,
-                'duel',
-                () => {
-                    const reward = 500;
-                    this.addGold(reward);
-                    statusEl.textContent = `Победа! Рейтинг и ${reward}💰`;
-                    if (btn) btn.disabled = false;
-                    leaderboardService.render();
-                },
-                () => {
-                    statusEl.textContent = "Поражение! Отряд уничтожен.";
-                    this.clearActiveArmy();
-                    if (btn) btn.disabled = false;
-                    this.updateUI();
-                    db.save(this.data);
-                    leaderboardService.render();
-                }
-            );
-        } catch (err) {
-            console.error(err);
-            statusEl.textContent = "Ошибка сети.";
-            if (btn) btn.disabled = false;
-        }
-    },
-
 
     async startDuel() {
         const totalUnits = Object.values(this.data.army).reduce((a, b) => a + b, 0);
@@ -459,7 +364,7 @@ export const state = {
         return popIncome + mineIncome;
     },
 
-        calculatePopulationGrowth() {
+    calculatePopulationGrowth() {
         const tax = this.data.taxRate;
         const riceLvl = this.data.buildings?.ricefieldLevel || 0;
         const maxPop = this.getMaxPopulation();
@@ -467,126 +372,85 @@ export const state = {
 
         if (currentPop >= maxPop) return 0;
 
-        // 1. Налоговый дебафф: при 100% налогах мультипликатор равен 0 (рост заблокирован)
-        // При налогах > 70% начинается жесткое удушение рождаемости
         const taxMultiplier = Math.max(0, 1 - (tax / 100));
-
-        // 2. Логистический коэффициент дефицита ресурсов (от 1.0 до 0.0)
-        // Чем ближе популяция к капу рисового поля, тем ближе этот коэффициент к нулю
         const spaceFactor = (maxPop - currentPop) / maxPop;
-
-        // 3. Динамическая базовая скорость. Берем корень, чтобы сбить экспоненту.
-        // Вместо "процента от миллионов" получаем плавную кривую.
         const baseGrowthRate = Math.sqrt(currentPop) * 2;
-
-        // 4. Бонус от рисовых полей дает фиксированный стабильный приток на старте эпохи
         const riceBonus = riceLvl * 15;
 
-        // Итоговый расчет с затуханием
         const finalGrowth = Math.floor((baseGrowthRate + riceBonus) * spaceFactor * taxMultiplier);
-
-        // Гарантируем хотя бы минимальный прирост в +1 человека, если налоги не 100%
         return finalGrowth <= 0 && tax < 100 ? 1 : finalGrowth;
     },
 
-        updateUI() {
+    updateUI() {
         const income = this.calculateIncome();
-        const goldElements = document.querySelectorAll('#gold-count');
-        
-        goldElements.forEach(el => {
+        document.querySelectorAll('#gold-count').forEach(el => {
             const displayValue = formatGold(this.data.gold);
-            if (income === 0) {
-                el.innerHTML = `${displayValue}`;
-            } else {
-                const displayIncome = income < 1 ? income.toFixed(3) : formatGold(income);
-                el.innerHTML = `${displayValue} <span style="font-size: 0.85rem; color: #00ff77; margin-left: 5px;">+${displayIncome}/с</span>`;
-            }
+            el.innerHTML = income === 0 
+                ? `${displayValue}` 
+                : `${displayValue} <span style="font-size: 0.85rem; color: #00ff77; margin-left: 5px;">+${income < 1 ? income.toFixed(3) : formatGold(income)}/с</span>`;
         });
 
-        // ДИНАМИЧЕСКИЙ ВЫВОД СИЛЫ КЛИКА В ЦЕНТРЕ
         const clickPowerEl = document.getElementById('click-power-val');
         if (clickPowerEl) {
-            const forgeLvl = this.data.buildings?.forge ? (this.data.buildings.forgeLevel || 1) : 0;
+            const forgeLvl = this.data.buildings?.forgeLevel || 1;
             clickPowerEl.textContent = formatGold(1 + (forgeLvl * 5));
         }
 
         const dateEl = document.getElementById('game-date');
         if (dateEl) {
             dateEl.textContent = formatSengokuDate(this.data.daysPassed || 0);
-            dateEl.style.display = 'block';
-            dateEl.style.width = '100%';
-            dateEl.style.textAlign = 'right';
         }
 
         const maxPop = this.getMaxPopulation();
         const isMaxed = this.data.population >= maxPop;
-
         const popEl = document.getElementById('pop-count');
         if (popEl) {
-            const baseValue = formatGold(this.data.population);
-            popEl.innerHTML = isMaxed 
-                ? `${baseValue} <span style="font-size: 0.7rem; color: #ff3333; vertical-align: super; font-weight: bold; margin-left: 2px;">MAX</span>`
-                : baseValue;
+            popEl.innerHTML = isMaxed ? `${formatGold(this.data.population)} <span style="color: #ff3333; font-size: 0.7rem;">MAX</span>` : formatGold(this.data.population);
         }
         
         const popGrowthEl = document.getElementById('pop-growth');
         if (popGrowthEl) {
-            if (isMaxed) {
-                popGrowthEl.textContent = `+0/день`;
-                popGrowthEl.style.color = '#666';
-            } else {
-                const currentGrowth = this.calculatePopulationGrowth();
-                popGrowthEl.textContent = `+${formatGold(currentGrowth)}/день`;
-                popGrowthEl.style.color = ''; 
-            }
+            popGrowthEl.textContent = isMaxed ? `+0/день` : `+${formatGold(this.calculatePopulationGrowth())}/день`;
+            popGrowthEl.style.color = isMaxed ? '#666' : '';
         }
         
         const taxVal = document.getElementById('tax-val');
         if (taxVal) taxVal.textContent = this.data.taxRate;
-        
         const taxSlider = document.getElementById('tax-slider');
         if (taxSlider) taxSlider.value = this.data.taxRate;
 
         const forgeCostEl = document.getElementById('forge-cost');
         if (forgeCostEl) {
-            forgeCostEl.textContent = forge.getCost(this.data.buildings?.forgeLevel || 1);
-        }
+    const flvl = this.data.buildings && this.data.buildings.forgeLevel ? this.data.buildings.forgeLevel : 1;
+    forgeCostEl.textContent = forge.getCost(flvl);
+}
+
 
         const combatStageEl = document.getElementById('combat-stage');
-        if (combatStageEl) {
-            combatStageEl.textContent = `Этап ${this.data.stage || 1}`;
-        }
+        if (combatStageEl) combatStageEl.textContent = `Этап ${this.data.stage || 1}`;
         
-        const totalUnits = Object.values(this.data.army).reduce((sum, count) => sum + count, 0);
         const limitCounterEl = document.getElementById('army-limit-counter');
-        if (limitCounterEl) {
-            limitCounterEl.textContent = totalUnits;
-        }
+        if (limitCounterEl) limitCounterEl.textContent = Object.values(this.data.army || {}).reduce((sum, count) => sum + count, 0);
 
-        barracksLogic.render();
+        if (typeof barracksLogic !== 'undefined') barracksLogic.render();
         this.renderInventory();
         this.renderMarket();
+
         this.checkBuildingAccess();
         
-        if (leaderboardService && typeof leaderboardService.updateLocalPlayerGold === 'function') {
+        if (window.leaderboardService?.updateLocalPlayerGold) {
             leaderboardService.updateLocalPlayerGold();
         }
     },
     
-        // === Вставь это внутрь объекта state в js/state.js ===
     syncWithServer(serverData) {
-    if (!serverData) return;
-    
-    // Обновляем только то, что прислал сервер
-    Object.keys(serverData).forEach(key => {
-        if (this.data.hasOwnProperty(key)) {
-            this.data[key] = serverData[key];
+        if (!serverData) return;
+        this.data = { ...this.data, ...serverData };
+        if (typeof db !== 'undefined' && db.save) {
+            db.save(this.data);
         }
-    });
-
-    this.updateUI();
-},
-
+        this.updateUI();
+    },
     
     checkBuildingAccess() {
         const container = document.getElementById('buildings-container');
@@ -689,7 +553,7 @@ export const state = {
 
             if (slot.item) {
                 const rawPrice = Math.floor(slot.item.basePrice * 1.5);
-const price = Math.floor(rawPrice * this.getHarbourPriceMultiplier());
+                const price = Math.floor(rawPrice * this.getHarbourPriceMultiplier());
                 card.setAttribute('data-rarity', slot.item.rarity || 'common');
                 card.innerHTML = `
                     <div class="item-name">${slot.item.name}</div>
@@ -726,4 +590,5 @@ const price = Math.floor(rawPrice * this.getHarbourPriceMultiplier());
         }
     }
 };
+
 window.state = state;
