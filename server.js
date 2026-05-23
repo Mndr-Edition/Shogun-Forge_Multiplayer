@@ -94,6 +94,7 @@ function getClientState(id) {
         gold: Math.floor(p.gold),
         population: Math.floor(p.population),
         daysPassed: p.daysPassed,
+        taxRate: p.taxRate !== undefined ? p.taxRate : 50, // <--- ДОБАВЬ ЭТУ СТРОКУ
         stage: p.stage || 1,
         buildings: p.buildings,
         army: p.army,
