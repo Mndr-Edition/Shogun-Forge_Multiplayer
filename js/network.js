@@ -8,7 +8,8 @@ export const socketService = {
 
     init() {
         // Так как сервер запущен локально в терминале Acode на порту 5000
-        const serverUrl = 'wss://echo.websocket.org'; // Это тестовый сервер для проверки сети
+        const serverUrl = 'wss://shogun-forge-multiplayer.onrender.com';
+ // Это тестовый сервер для проверки сети
 
         console.log(`[СЕТЬ] Подключение к серверу: ${serverUrl}`);
         this.socket = new WebSocket(serverUrl);
