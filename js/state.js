@@ -79,49 +79,33 @@ const DEFAULT_STATE = {
 };
 
 export const state = {
-    data: null,
+    // 1. Инициализируем дефолтом, чтобы методы не крашились до коннекта
+    data: { ...DEFAULT_STATE },
 
     init() {
-        this.data = db.load(DEFAULT_STATE);
+        // 2. Пытаемся подгрузить старый сейв (если нужно для оффлайна), 
+        // но приоритет — дефолт, если сейв битый
+        const saved = db.load(); 
+        if (saved) {
+            // Глубокое слияние, чтобы не потерять поля, если структура сейва устарела
+            this.data = { ...DEFAULT_STATE, ...saved };
+        }
         
-        if (typeof this.data.taxRate !== 'number' || isNaN(this.data.taxRate)) this.data.taxRate = 50;
-        if (typeof this.data.population !== 'number' || isNaN(this.data.population)) this.data.population = 100;
-        if (typeof this.data.gold !== 'number' || isNaN(this.data.gold)) this.data.gold = 200;
-        
-        if (!this.data.buildings) this.data.buildings = {};
-        Object.keys(BUILDINGS_CONFIG).forEach(bId => {
-            if (this.data.buildings[bId] === undefined) this.data.buildings[bId] = (bId === 'forge');
-            if (this.data.buildings[`${bId}Level`] === undefined) this.data.buildings[`${bId}Level`] = (bId === 'forge' ? 1 : 0);
-        });
-        
-        if (!this.data.army || Object.keys(this.data.army).length < Object.keys(UNITS_CONFIG.types).length) {
-            this.data.army = generateInitialUnitMap(0);
-        }
-        if (!this.data.reserve || Object.keys(this.data.reserve).length < Object.keys(UNITS_CONFIG.types).length) {
-            this.data.reserve = generateInitialUnitMap(0);
-        }
-        if (!this.data.unitTech || Object.keys(this.data.unitTech).length < Object.keys(UNITS_CONFIG.types).length) {
-            this.data.unitTech = generateInitialUnitMap(1);
-        }
-
-        if (!this.data.market || !this.data.market.systemSlots || this.data.market.systemSlots.length !== 6 || this.data.market.systemSlots[0].cooldown === undefined) {
-            this.data.market = {
-                systemSlots: Array(6).fill(null).map(() => ({ item: forge.rollWeapon(), cooldown: 0 })),
-                playerSlots: this.data.market?.playerSlots || []
-            };
-        }
-
-        if (typeof barracksLogic.init === 'function') {
-            barracksLogic.init();
-        }
+        // 3. Запуск сокетов и UI
+        socketService.init();
         this.updateUI();
     },
 
-    addGold(amount) {
-        this.data.gold += amount;
-        this.updateUI();
-        db.save(this.data);
+    // Дальше методы продолжаются внутри объекта state
+
+
+
+        addGold(amount) {
+        // Шлем запрос на сервер, чтобы он проверил возможность начисления
+        // и обновил баланс в БД. Если это клик — шлем CLIENT_CLICK_GOLD
+        socketService.send('CLIENT_CLICK_GOLD', { amount });
     },
+
 
     getUnitCost(type) {
         const cfg = UNITS_CONFIG.types[type];
@@ -130,30 +114,30 @@ export const state = {
         return Math.floor(cfg.baseCost * Math.pow(cfg.multiplier, currentCount));
     },
 
-        buyUnit(type) {
-        // Проверка технологического лока по зданиям
+            buyUnit(type) {
+        // Локальная проверка (экономим трафик)
         const lockStatus = this.checkUnitUnlock(type);
         if (!lockStatus.unlocked) return alert(`Найма нет! ${lockStatus.reason}`);
 
         const cost = this.getUnitCost(type);
         if (this.data.gold < cost) return alert("Недостаточно золота для найма!");
 
-        this.data.gold -= cost;
-        this.data.reserve[type] = (this.data.reserve[type] || 0) + 1;
-        
-        this.updateUI();
-        db.save(this.data);
+        // Вместо прямого изменения данных — запрос к серверу
+        socketService.send('CLIENT_BUY_UNIT', { 
+            type: type, 
+            cost: cost 
+        });
     },
 
-    upgradeUnitTech(type) {
+
+        upgradeUnitTech(type) {
         const currentLevel = this.data.unitTech[type] || 1;
         if (UNITS_CONFIG.maxTechLevel && currentLevel >= UNITS_CONFIG.maxTechLevel) {
             return alert("Достигнут максимальный уровень технологии!");
         }
 
-        // Вычисляем, какое здание контролирует этот тип юнита для проверки лимита ранга (+5 за лвл)
         const cfg = UNITS_CONFIG.types[type];
-        let buildingId = 'sword_dojo'; // Дефолт
+        let buildingId = 'sword_dojo';
         if (cfg.tags.includes('siege')) buildingId = 'forge';
         else if (cfg.tags.includes('elite') && !cfg.tags.includes('cavalry')) buildingId = 'jujutsu_dojo';
         else if (cfg.tags.includes('monk')) buildingId = 'temple';
@@ -171,15 +155,15 @@ export const state = {
         const cost = currentLevel * 1500;
         if (this.data.gold < cost) return alert("Недостаточно золота для технологического апгрейда!");
 
-        this.data.gold -= cost;
-        this.data.unitTech[type] = currentLevel + 1;
-
-        this.updateUI();
-        db.save(this.data);
+        // Отправляем запрос на сервер
+        socketService.send('CLIENT_UPGRADE_TECH', { 
+            type: type, 
+            cost: cost 
+        });
     },
 
     
-    toggleUnitToArmy(type, isDeploy) {
+        toggleUnitToArmy(type, isDeploy) {
         const totalActive = Object.values(this.data.army).reduce((sum, count) => sum + count, 0);
         const inReserve = this.data.reserve[type] || 0;
         const inArmy = this.data.army[type] || 0;
@@ -187,19 +171,17 @@ export const state = {
         if (isDeploy) {
             if (totalActive >= 10) return alert("Лимит активного отряда!");
             if (inReserve <= 0) return alert("В резерве нет свободных юнитов!");
-
-            this.data.reserve[type]--;
-            this.data.army[type] = inArmy + 1;
         } else {
             if (inArmy <= 0) return;
-
-            this.data.army[type]--;
-            this.data.reserve[type] = inReserve + 1;
         }
 
-        this.updateUI();
-        db.save(this.data);
+        // Шлем команду серверу
+        socketService.send('CLIENT_TOGGLE_UNIT', { 
+            type: type, 
+            isDeploy: isDeploy 
+        });
     },
+
     
     getBuildingDiscount() {
         const campLvl = this.data.buildings?.lumbercampLevel || 0;
@@ -229,33 +211,23 @@ export const state = {
         return Math.max(0.70, 1.0 - (harbourLvl * 0.03));
     },
 
-    upgradeBuilding(id) {
-        const isOwned = this.data.buildings[id];
-        const currentLvl = this.data.buildings[`${id}Level`] || 0;
-        
-        if (isOwned && currentLvl >= 10) return alert("Достигнут максимальный 10 ранг постройки!");
-        
-        const cost = this.getBuildingCost(id);
-        if (this.data.gold < cost) return alert("Недостаточно золота для строительства/улучшения!");
+        upgradeBuilding(id) {
+    const isOwned = this.data.buildings[id];
+    const currentLvl = this.data.buildings[`${id}Level`] || 0;
+    if (isOwned && currentLvl >= 10) return alert("Максимальный уровень!");
+    
+    // Локальная проверка стоимости перед запросом
+    const cost = this.getBuildingCost(id);
+    if (this.data.gold < cost) return alert("Недостаточно золота!");
 
-        this.data.gold -= cost;
-        
-        if (!isOwned) {
-            this.data.buildings[id] = true;
-            this.data.buildings[`${id}Level`] = 1;
-        } else {
-            this.data.buildings[`${id}Level`] = currentLvl + 1;
-        }
+    socketService.send('CLIENT_BUY_BUILDING', { buildingId: id, cost: cost });
+},
 
-        this.updateUI();
-        db.save(this.data);
-    },
 
-    clearActiveArmy() {
-        Object.keys(this.data.army).forEach(type => {
-            this.data.army[type] = 0;
-        });
-    },
+        clearActiveArmy() {
+    socketService.send('CLIENT_CLEAR_ARMY', {});
+},
+
 
     getItemInflationMultiplier(itemType) {
         if (!this.data.market || !this.data.market.playerSlots) return 1.0;
@@ -274,41 +246,17 @@ export const state = {
         return 1000000 + (riceLvl * 1400000);
     },
 
-        processTick() {
-        this.data.daysPassed = (this.data.daysPassed || 0) + 1;
-        
-        // Кап популяции
-        const maxPop = this.getMaxPopulation();
-        this.data.population = Math.min(maxPop, this.data.population + this.calculatePopulationGrowth());
-        
-        this.data.gold += this.calculateIncome();
 
-        if (this.data.market?.playerSlots && this.data.market.playerSlots.length > 3) {
-            this.data.market.playerSlots.forEach(slot => {
-                const minPrice = Math.floor(slot.item.basePrice * 0.10);
-                if (slot.price > minPrice) {
-                    slot.price = Math.max(minPrice, Math.floor(slot.price * 0.998));
-                }
-            });
-        }
-
-        marketLogic.tick(this.data);
-        this.updateUI();
-        db.save(this.data);
-    },
-
-    craft() {
+        Craft() {
         const techLevel = this.data.buildings?.forgeLevel || 1;
         const cost = forge.getCost(techLevel);
+        
         if (this.data.gold < cost) return alert("Недостаточно золота для крафта!");
 
-        this.data.gold -= cost;
-        const weapon = forge.rollWeapon(techLevel);
-        this.data.inventory.push(weapon);
-        
-        this.updateUI();
-        db.save(this.data);
+        // Отправляем запрос серверу
+        socketService.send('CLIENT_CRAFT_WEAPON', { techLevel });
     },
+
     
         // Метод внутри объекта state {}
     checkUnitUnlock(type) {
@@ -358,125 +306,37 @@ export const state = {
         return { unlocked: true };
     },
 
-        sellItemToMarket(id) {
-        const itemIdx = this.data.inventory.findIndex(i => i.id === id);
-        if (itemIdx === -1) return;
+            SellItemToMarket(id) {
+    // Убираем лишнюю локальную проверку, если сервер всё равно её делает
+    socketService.send('CLIENT_SELL_ITEM', { id: id });
+},
 
-        const item = this.data.inventory[itemIdx];
-        const dynamicSalePrice = this.calculateCurrentPrice(item);
-        
-        // Модификация времени порта
-        const baseTime = Math.floor(Math.random() * 240) + 30; 
-        const timeToBuy = Math.floor(baseTime * this.getHarbourTimeMultiplier()); 
 
-        const marketSlot = {
-            item: { ...item, equipped: false },
-            price: dynamicSalePrice, 
-            timeLeft: timeToBuy
-        };
+            BuySystemItem(index) {
+    const slot = this.data.market.systemSlots[index];
+    if (!slot || !slot.item) return;
+    
+    const price = this.calculateSystemItemPrice(slot.item);
+    if (this.data.gold < price) return alert("Недостаточно золота!");
 
-        this.data.inventory.splice(itemIdx, 1);
-        this.data.market.playerSlots.push(marketSlot);
+    socketService.send('CLIENT_BUY_SYSTEM_ITEM', { index });
+},
 
-        this.updateUI();
-        db.save(this.data);
+
+        StartBattle(stage) {
+        // ... проверки перед боем ...
+        socketService.send('CLIENT_START_BATTLE', { stage });
     },
 
-        buySystemItem(index) {
-        const slot = this.data.market.systemSlots[index];
-        if (!slot || !slot.item) return;
 
-        // Модификация цены покупки портом
-        const rawPrice = Math.floor(slot.item.basePrice * 1.5);
-        const currentSystemPrice = Math.floor(rawPrice * this.getHarbourPriceMultiplier());
-        
-        if (this.data.gold < currentSystemPrice) return alert("Недостаточно золота!");
-
-        this.data.gold -= currentSystemPrice;
-        this.data.inventory.push({ 
-            ...slot.item, 
-            id: `art_${Date.now()}_${Math.random().toString(36).substr(2, 4)}` 
-        });
-        
-        slot.item = null;
-        
-        // Модификация кулдауна обновления слота портом
-        const baseCooldown = Math.floor(Math.random() * 90) + 30;
-        slot.cooldown = Math.floor(baseCooldown * this.getHarbourTimeMultiplier());
-
-        this.updateUI();
-        db.save(this.data);
-    },
-
-    generateEnemyArmy(stage) {
-        const enemyArmy = [];
-        const pool = Object.keys(UNITS_CONFIG.types);
-        const filteredPool = stage < 5 
-            ? pool.filter(id => !UNITS_CONFIG.types[id].tags.includes('elite') && !UNITS_CONFIG.types[id].tags.includes('siege'))
-            : pool;
-
-        const maxEnemyCards = Math.min(10, 2 + Math.floor(stage * 0.6));
-        let remainingSlots = maxEnemyCards;
-
-        while (remainingSlots > 0) {
-            const randomType = filteredPool[Math.floor(Math.random() * filteredPool.length)];
-            const count = Math.min(remainingSlots, Math.ceil(Math.random() * 2));
-            const existing = enemyArmy.find(u => u.type === randomType);
-            if (existing) {
-                existing.count += count;
-            } else {
-                enemyArmy.push({ type: randomType, count });
-            }
-            remainingSlots -= count;
-        }
-        return enemyArmy;
-    },
-
-            startCampaign() {
+                StartCampaign() {
         const totalUnits = Object.values(this.data.army).reduce((a, b) => a + b, 0);
-        if (totalUnits === 0) return alert("Твоя армия пуста! Добавь воинов в отряд из резерва.");
+        if (totalUnits === 0) return alert("Твоя армия пуста!");
 
-        const btn = document.getElementById('start-campaign-btn');
-        if (btn) btn.disabled = true;
-
-        // Архитектурный фикс: Принудительно убираем мета-данные дуэли при входе в кампанию
-        const duelMeta = document.getElementById('duel-enemy-meta');
-        if (duelMeta) duelMeta.style.display = 'none';
-
-        const statusEl = document.getElementById('battle-status');
-        if (statusEl) statusEl.textContent = "Полки заняли позиции...";
-
-        const playerArmy = Object.entries(this.data.army).map(([type, count]) => ({
-            type, count
-        })).filter(u => u.count > 0);
-
-        const currentStage = this.data.stage || 1;
-        const enemyArmy = this.generateEnemyArmy(currentStage);
-
-        console.log("Плеер Армия:", playerArmy, "Враг Армия:", enemyArmy);
-
-        combatLogic.start(
-            playerArmy, 
-            enemyArmy,
-            'campaign',
-            () => {
-                const reward = currentStage * 250;
-                this.addGold(reward); 
-                this.data.stage++;
-                db.save(this.data);
-                if (statusEl) statusEl.textContent = `Победа! Награда: ${reward}💰`;
-                if (btn) btn.disabled = false;
-                this.updateUI();
-            },
-            () => {
-                if (statusEl) statusEl.textContent = "Поражение! Отряд уничтожен.";
-                this.clearActiveArmy();
-                if (btn) btn.disabled = false;
-                this.updateUI();
-                db.save(this.data);
-            }
-        );
+        // Отправляем команду серверу
+        socketService.send('CLIENT_START_CAMPAIGN', { stage: this.data.stage || 1 });
     },
+
 
     async startDuel() {
         const totalUnits = Object.values(this.data.army).reduce((a, b) => a + b, 0);
@@ -718,27 +578,18 @@ export const state = {
     
         // === Вставь это внутрь объекта state в js/state.js ===
     syncWithServer(serverData) {
-        if (!serverData) return;
-        
-        // Жесткая синхронизация критических данных авторитарного сервера
-        this.data.gold = serverData.gold;
-        this.data.population = serverData.population;
-        this.data.daysPassed = serverData.daysPassed;
-        this.data.stage = serverData.stage;
-        this.data.inventory = serverData.inventory || [];
-        
-        if (serverData.buildings) this.data.buildings = serverData.buildings;
-        if (serverData.army) this.data.army = serverData.army;
-        if (serverData.reserve) this.data.reserve = serverData.reserve;
-        if (serverData.unitTech) this.data.unitTech = serverData.unitTech;
-        if (serverData.market) this.data.market = serverData.market;
-        
-        // Прокидываем ID и имя, выданные сервером при регистрации сессии
-        if (serverData.id) this.data.id = serverData.id;
-        if (serverData.name) this.data.name = serverData.name;
+    if (!serverData) return;
+    
+    // Обновляем только то, что прислал сервер
+    Object.keys(serverData).forEach(key => {
+        if (this.data.hasOwnProperty(key)) {
+            this.data[key] = serverData[key];
+        }
+    });
 
-        this.updateUI();
-    },
+    this.updateUI();
+},
+
     
     checkBuildingAccess() {
         const container = document.getElementById('buildings-container');
@@ -848,7 +699,7 @@ const price = Math.floor(rawPrice * this.getHarbourPriceMultiplier());
                     <div class="item-stat">Цена: ${price}💰</div>
                     <button class="buy-btn btn success" style="margin-top:5px; padding:5px; font-size:0.85rem;">Купить</button>
                 `;
-                card.querySelector('.buy-btn').addEventListener('click', () => this.buySystemItem(index));
+                card.querySelector('.buy-btn').addEventListener('click', () => this.BuySystemItem(index));
             } else {
                 card.setAttribute('data-rarity', 'empty');
                 card.innerHTML = `

@@ -164,6 +164,42 @@ wss.on('connection', (ws) => {
                     }));
                     broadcastLeaderboard();
                     break;
+                    
+                    case 'CLIENT_START_CAMPAIGN':
+    if (clientId && db.players[clientId]) {
+        const p = db.players[clientId];
+        const stage = payload.stage;
+        
+        // 1. Генерируем врага на сервере (контроль сложности)
+        const enemyArmy = generateEnemyArmy(stage);
+        
+        // 2. Логика симуляции боя (на сервере!)
+        const battleResult = combatEngine.simulate(p.army, enemyArmy);
+
+        if (battleResult.win) {
+            const reward = stage * 250;
+            p.gold += reward;
+            p.stage++;
+        } else {
+            // Обнуляем армию при проигрыше
+            Object.keys(p.army).forEach(type => p.army[type] = 0);
+        }
+
+        // 3. Отправляем результат клиенту для отображения анимации
+        ws.send(JSON.stringify({ 
+            type: 'SERVER_BATTLE_RESULT', 
+            payload: { 
+                win: battleResult.win,
+                enemyArmy,
+                reward: battleResult.win ? (stage * 250) : 0
+            } 
+        }));
+        
+        // Синхронизируем состояние
+        ws.send(JSON.stringify({ type: 'SERVER_STATE_SYNC', payload: getClientState(clientId) }));
+    }
+    break;
+
 
                 case 'PING':
                     ws.send(JSON.stringify({ type: 'PONG' }));
@@ -186,6 +222,34 @@ wss.on('connection', (ws) => {
                         p.gold += clickPower;
                     }
                     break;
+                                    case 'CLIENT_BUY_BUILDING':
+                    if (clientId && db.players[clientId]) {
+                        const p = db.players[clientId];
+                        const { buildingId, cost } = payload;
+                        if (p.gold >= cost) {
+                            p.gold -= cost;
+                            if (!p.buildings) p.buildings = {};
+                            const key = `${buildingId}Level`;
+                            p.buildings[key] = (p.buildings[key] || 0) + 1;
+                            // Сразу синкаем, чтобы клиент не ждал тика
+                            ws.send(JSON.stringify({ type: 'SERVER_STATE_SYNC', payload: getClientState(clientId) }));
+                        }
+                    }
+                    break;
+
+                case 'CLIENT_CRAFT':
+                    if (clientId && db.players[clientId]) {
+                        const p = db.players[clientId];
+                        const { item, cost } = payload;
+                        if (p.gold >= cost) {
+                            p.gold -= cost;
+                            if (!p.inventory) p.inventory = [];
+                            p.inventory.push(item);
+                            ws.send(JSON.stringify({ type: 'SERVER_STATE_SYNC', payload: getClientState(clientId) }));
+                        }
+                    }
+                    break;
+
 
                 case 'CLIENT_REQ_LEADERBOARD':
                     broadcastLeaderboard();
