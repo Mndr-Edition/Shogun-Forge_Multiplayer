@@ -1,0 +1,473 @@
+{
+  "players": {
+    "8d66342a-7e19-4864-83ef-e2e7e822a1fc": {
+      "id": "8d66342a-7e19-4864-83ef-e2e7e822a1fc",
+      "name": "Daimyo_946",
+      "gold": 337511.6441199998,
+      "clickPower": 1,
+      "inventory": [
+        {
+          "id": "gear_1779520819569_38",
+          "name": "Мастерский Четки",
+          "rarity": "common",
+          "basePrice": 300,
+          "color": "#888"
+        },
+        {
+          "id": "gear_1779520820927_402",
+          "name": "Простой Катана",
+          "rarity": "rare",
+          "basePrice": 300,
+          "color": "#1eff00"
+        },
+        {
+          "id": "gear_1779520821569_225",
+          "name": "Императорский Шлем",
+          "rarity": "legendary",
+          "basePrice": 750,
+          "color": "#ff55ff"
+        },
+        {
+          "id": "gear_1779520824524_438",
+          "name": "Простой Шлем",
+          "rarity": "common",
+          "basePrice": 75,
+          "color": "#888"
+        },
+        {
+          "id": "gear_1779520825299_98",
+          "name": "Добротный Катана",
+          "rarity": "common",
+          "basePrice": 120,
+          "color": "#888"
+        },
+        {
+          "id": "gear_1779520825892_783",
+          "name": "Простой Шлем",
+          "rarity": "rare",
+          "basePrice": 187,
+          "color": "#1eff00"
+        }
+      ],
+      "market": {
+        "systemSlots": [
+          {
+            "item": {
+              "id": "gear_1779382189606_581",
+              "name": "Мастерский Доспех",
+              "rarity": "rare",
+              "basePrice": 450,
+              "color": "#1eff00"
+            },
+            "cooldown": 0
+          },
+          {
+            "item": {
+              "id": "gear_1779382189606_205",
+              "name": "Добротный Четки",
+              "rarity": "common",
+              "basePrice": 300,
+              "color": "#888"
+            },
+            "cooldown": 0
+          },
+          {
+            "item": {
+              "id": "gear_1779382189606_378",
+              "name": "Ржавый Шлем",
+              "rarity": "mythic",
+              "basePrice": 1500,
+              "color": "#ffaa00"
+            },
+            "cooldown": 0
+          },
+          {
+            "item": {
+              "id": "gear_1779382189606_320",
+              "name": "Добротный Шлем",
+              "rarity": "common",
+              "basePrice": 75,
+              "color": "#888"
+            },
+            "cooldown": 0
+          },
+          {
+            "item": {
+              "id": "gear_1779382189606_72",
+              "name": "Ржавый Четки",
+              "rarity": "rare",
+              "basePrice": 750,
+              "color": "#1eff00"
+            },
+            "cooldown": 0
+          },
+          {
+            "item": {
+              "id": "gear_1779382189606_524",
+              "name": "Императорский Четки",
+              "rarity": "common",
+              "basePrice": 300,
+              "color": "#888"
+            },
+            "cooldown": 0
+          }
+        ],
+        "playerSlots": []
+      },
+      "army": {
+        "ashigaru_bow": 0,
+        "ashigaru_katana": 0,
+        "ashigaru_matchlock": 0,
+        "ashigaru_spear": 0,
+        "samurai": 0,
+        "samurai_bow": 0,
+        "samurai_mathclock": 0,
+        "nodachi_samurai": 0,
+        "date_spear": 0,
+        "ninja": 0,
+        "ninja_elite": 0,
+        "monk_healer": 0,
+        "monk_matchlock": 0,
+        "monk_naginata": 0,
+        "monk_spear": 0,
+        "fire_cavalry": 0,
+        "heavy_cavalry": 0,
+        "light_cavalry": 0,
+        "hero_bow": 0,
+        "hero_katana": 0,
+        "hero_spear": 0,
+        "hero_tetsubo": 0,
+        "benkei_blades": 0,
+        "tokitakas_tanegashima": 0,
+        "naginata_samurai": 0,
+        "bomb": 0,
+        "cannon": 0,
+        "mangonel": 0
+      },
+      "reserve": {
+        "ashigaru_bow": 0,
+        "ashigaru_katana": 0,
+        "ashigaru_matchlock": 0,
+        "ashigaru_spear": 0,
+        "samurai": 0,
+        "samurai_bow": 0,
+        "samurai_mathclock": 0,
+        "nodachi_samurai": 0,
+        "date_spear": 0,
+        "ninja": 0,
+        "ninja_elite": 0,
+        "monk_healer": 0,
+        "monk_matchlock": 0,
+        "monk_naginata": 0,
+        "monk_spear": 0,
+        "fire_cavalry": 0,
+        "heavy_cavalry": 0,
+        "light_cavalry": 0,
+        "hero_bow": 0,
+        "hero_katana": 0,
+        "hero_spear": 0,
+        "hero_tetsubo": 0,
+        "benkei_blades": 0,
+        "tokitakas_tanegashima": 0,
+        "naginata_samurai": 0,
+        "bomb": 0,
+        "cannon": 0,
+        "mangonel": 0
+      },
+      "unitTech": {
+        "ashigaru_bow": 1,
+        "ashigaru_katana": 1,
+        "ashigaru_matchlock": 1,
+        "ashigaru_spear": 1,
+        "samurai": 1,
+        "samurai_bow": 1,
+        "samurai_mathclock": 1,
+        "nodachi_samurai": 1,
+        "date_spear": 1,
+        "ninja": 1,
+        "ninja_elite": 1,
+        "monk_healer": 1,
+        "monk_matchlock": 1,
+        "monk_naginata": 1,
+        "monk_spear": 1,
+        "fire_cavalry": 1,
+        "heavy_cavalry": 1,
+        "light_cavalry": 1,
+        "hero_bow": 1,
+        "hero_katana": 1,
+        "hero_spear": 1,
+        "hero_tetsubo": 1,
+        "benkei_blades": 1,
+        "tokitakas_tanegashima": 1,
+        "naginata_samurai": 1,
+        "bomb": 1,
+        "cannon": 1,
+        "mangonel": 1
+      },
+      "stage": 1,
+      "taxRate": 40,
+      "population": 2540632,
+      "daysPassed": 529,
+      "buildings": {
+        "forge": true,
+        "forgeLevel": 10,
+        "goldmine": false,
+        "goldmineLevel": 0,
+        "lumbercamp": false,
+        "lumbercampLevel": 0,
+        "ricefield": true,
+        "ricefieldLevel": 2,
+        "harbour": false,
+        "harbourLevel": 0,
+        "archer_dojo": true,
+        "archer_dojoLevel": 1,
+        "jujutsu_dojo": false,
+        "jujutsu_dojoLevel": 0,
+        "temple": false,
+        "templeLevel": 0,
+        "sword_dojo": false,
+        "sword_dojoLevel": 0,
+        "stable": false,
+        "stableLevel": 0,
+        "ninjutsu_dojo": false,
+        "ninjutsu_dojoLevel": 0
+      }
+    },
+    "0ac0e22d-85f3-4590-9e58-2db1f8cd9c19": {
+      "id": "0ac0e22d-85f3-4590-9e58-2db1f8cd9c19",
+      "name": "Daimyo_791",
+      "gold": 602.4385000000001,
+      "clickPower": 1,
+      "inventory": [
+        {
+          "id": "art_1778944864782_ybtb",
+          "name": "Редкий Кристалл Энергии",
+          "rarity": "rare",
+          "type": "кристалл",
+          "income": 6,
+          "damage": 6,
+          "equipped": true,
+          "color": "#1eff00"
+        },
+        {
+          "id": "art_1778944882429_yeg5",
+          "name": "Эпический Кольцо Льда",
+          "rarity": "epic",
+          "type": "кольцо",
+          "income": 5,
+          "damage": 10,
+          "equipped": true,
+          "color": "#0070dd"
+        },
+        {
+          "id": "art_1778944888565_wkrw",
+          "name": "Редкий Амулет Духа",
+          "rarity": "rare",
+          "type": "амулет",
+          "income": 4,
+          "damage": 2,
+          "equipped": true,
+          "color": "#1eff00"
+        }
+      ],
+      "market": {
+        "systemSlots": [
+          {
+            "item": {
+              "id": "gear_1779526452526_471",
+              "name": "Добротный Катана",
+              "rarity": "common",
+              "basePrice": 120,
+              "color": "#888"
+            },
+            "cooldown": 0
+          },
+          {
+            "item": {
+              "id": "gear_1779526452547_875",
+              "name": "Простой Доспех",
+              "rarity": "rare",
+              "basePrice": 450,
+              "color": "#1eff00"
+            },
+            "cooldown": 0
+          },
+          {
+            "item": {
+              "id": "gear_1779526452547_401",
+              "name": "Добротный Доспех",
+              "rarity": "rare",
+              "basePrice": 450,
+              "color": "#1eff00"
+            },
+            "cooldown": 0
+          },
+          {
+            "item": {
+              "id": "gear_1779526452547_922",
+              "name": "Ржавый Шлем",
+              "rarity": "common",
+              "basePrice": 75,
+              "color": "#888"
+            },
+            "cooldown": 0
+          },
+          {
+            "item": {
+              "id": "gear_1779526452547_867",
+              "name": "Ржавый Шлем",
+              "rarity": "common",
+              "basePrice": 75,
+              "color": "#888"
+            },
+            "cooldown": 0
+          },
+          {
+            "item": {
+              "id": "gear_1779526452547_226",
+              "name": "Ржавый Катана",
+              "rarity": "epic",
+              "basePrice": 600,
+              "color": "#00c6ff"
+            },
+            "cooldown": 0
+          }
+        ],
+        "playerSlots": [
+          {
+            "item": {
+              "id": "art_1778944859456_k1ke",
+              "name": "Обычный Кольцо Льда",
+              "rarity": "common",
+              "type": "кольцо",
+              "income": 1,
+              "damage": 2,
+              "equipped": false,
+              "color": "#8c8c8c"
+            },
+            "price": 150,
+            "timeLeft": 174
+          }
+        ]
+      },
+      "army": {
+        "ashigaru_bow": 0,
+        "ashigaru_katana": 0,
+        "ashigaru_matchlock": 0,
+        "ashigaru_spear": 0,
+        "samurai": 0,
+        "samurai_bow": 0,
+        "samurai_mathclock": 0,
+        "nodachi_samurai": 0,
+        "date_spear": 0,
+        "ninja": 0,
+        "ninja_elite": 0,
+        "monk_healer": 0,
+        "monk_matchlock": 0,
+        "monk_naginata": 0,
+        "monk_spear": 0,
+        "fire_cavalry": 0,
+        "heavy_cavalry": 0,
+        "light_cavalry": 0,
+        "hero_bow": 0,
+        "hero_katana": 0,
+        "hero_spear": 0,
+        "hero_tetsubo": 0,
+        "benkei_blades": 0,
+        "tokitakas_tanegashima": 0,
+        "naginata_samurai": 0,
+        "bomb": 0,
+        "cannon": 0,
+        "mangonel": 0
+      },
+      "stage": 1,
+      "reserve": {
+        "ashigaru_bow": 0,
+        "ashigaru_katana": 0,
+        "ashigaru_matchlock": 0,
+        "ashigaru_spear": 0,
+        "samurai": 0,
+        "samurai_bow": 0,
+        "samurai_mathclock": 0,
+        "nodachi_samurai": 0,
+        "date_spear": 0,
+        "ninja": 0,
+        "ninja_elite": 0,
+        "monk_healer": 0,
+        "monk_matchlock": 0,
+        "monk_naginata": 0,
+        "monk_spear": 0,
+        "fire_cavalry": 0,
+        "heavy_cavalry": 0,
+        "light_cavalry": 0,
+        "hero_bow": 0,
+        "hero_katana": 0,
+        "hero_spear": 0,
+        "hero_tetsubo": 0,
+        "benkei_blades": 0,
+        "tokitakas_tanegashima": 0,
+        "naginata_samurai": 0,
+        "bomb": 0,
+        "cannon": 0,
+        "mangonel": 0
+      },
+      "unitTech": {
+        "ashigaru_bow": 1,
+        "ashigaru_katana": 1,
+        "ashigaru_matchlock": 1,
+        "ashigaru_spear": 1,
+        "samurai": 1,
+        "samurai_bow": 1,
+        "samurai_mathclock": 1,
+        "nodachi_samurai": 1,
+        "date_spear": 1,
+        "ninja": 1,
+        "ninja_elite": 1,
+        "monk_healer": 1,
+        "monk_matchlock": 1,
+        "monk_naginata": 1,
+        "monk_spear": 1,
+        "fire_cavalry": 1,
+        "heavy_cavalry": 1,
+        "light_cavalry": 1,
+        "hero_bow": 1,
+        "hero_katana": 1,
+        "hero_spear": 1,
+        "hero_tetsubo": 1,
+        "benkei_blades": 1,
+        "tokitakas_tanegashima": 1,
+        "naginata_samurai": 1,
+        "bomb": 1,
+        "cannon": 1,
+        "mangonel": 1
+      },
+      "taxRate": 50,
+      "population": 7936,
+      "buildings": {
+        "forge": true,
+        "forgeLevel": 1,
+        "goldmine": false,
+        "goldmineLevel": 0,
+        "lumbercamp": false,
+        "lumbercampLevel": 0,
+        "harbour": false,
+        "harbourLevel": 0,
+        "ricefield": false,
+        "ricefieldLevel": 0,
+        "archer_dojo": false,
+        "archer_dojoLevel": 0,
+        "jujutsu_dojo": false,
+        "jujutsu_dojoLevel": 0,
+        "temple": false,
+        "templeLevel": 0,
+        "sword_dojo": false,
+        "sword_dojoLevel": 0,
+        "stable": false,
+        "stableLevel": 0,
+        "ninjutsu_dojo": false,
+        "ninjutsu_dojoLevel": 0
+      },
+      "daysPassed": 162
+    }
+  }
+}

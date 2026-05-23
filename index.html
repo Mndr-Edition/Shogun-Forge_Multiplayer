@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Forge Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+                             <header class="stats" style="position: fixed; top: 0; left: 0; width: 100vw; display: flex; align-items: center; box-sizing: border-box; padding: 0 8px; height: 28px; background: #111; border-bottom: 1px solid #222; z-index: 9999;">
+            <!-- Единая кнопка-фон на всю доступную ширину хедера -->
+            <div class="stat-dashboard-tab" style="width: 100%; height: 22px; display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 0 12px; box-sizing: border-box;">
+                <!-- Золото слева -->
+                <div class="stat-box gold-dashboard" style="display: flex; align-items: center;">
+                    <div class="gold-main" style="display: flex; align-items: center; gap: 4px; font-size: 0.8rem; font-weight: bold; color: #fff;">
+                        <img src="gold.png" alt="Gold" style="width: 14px; height: 14px; object-fit: contain;">
+                        <span id="gold-count">0</span>
+                    </div>
+                </div>
+                
+                <!-- Дата справа -->
+                <div class="stat-box date-dashboard" style="display: flex; align-items: center;">
+                    <span id="game-date" class="technical" style="font-size: 0.75rem; color: #888; letter-spacing: 0.5px; font-weight: 500;">01.01.1467</span>
+                </div>
+            </div>
+        </header>
+
+
+        <div style="height: 28px; width: 100%;"></div>
+
+        <main class="game-space">
+            <div class="tabs-nav">
+                <button id="tab-center-btn" class="tab-btn active">🏛 Центр</button>
+                <button id="tab-forge-btn" class="tab-btn">⚔️ Кузница</button>
+                <button id="tab-barracks-btn" class="tab-btn">⛺ Казармы</button>
+                <button id="tab-market-btn" class="tab-btn">⚖️ Рынок</button>
+                <button id="tab-combat-btn" class="tab-btn">🛡️ Битва</button>
+                <button id="tab-leaderboard-btn" class="tab-btn">🏆 Топ</button>
+            </div>
+
+            <div id="screen-center" class="game-screen active">
+                <section class="clicker-panel" style="margin-bottom: 15px;">
+                    <button id="click-btn" class="btn primary" style="width: 100%; padding: 16px; font-size: 1.1rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 0 #990000; border-bottom: 4px solid #990000; transition: none;">
+                        🏯 Чеканить монеты (+<span id="click-power-val">1</span> 💰)
+                    </button>
+                </section>
+
+                <section class="dashboard-panel">
+                    <div class="panel-row">
+                        <div class="panel-stat">
+                            <span class="label">НАСЕЛЕНИЕ</span>
+                            <span id="pop-count" class="value technical">100</span>
+                        </div>
+                        <div class="panel-stat text-right">
+                            <span class="label">ПРИРОСТ</span>
+                            <span id="pop-growth" class="value growth technical">+2/сек</span>
+                        </div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <span class="label">НАЛОГОВАЯ СТАВКА</span>
+                            <span class="value technical"><span id="tax-val">50</span>%</span>
+                        </div>
+                        <input type="range" id="tax-slider" min="0" max="100" value="50" class="tech-slider">
+                    </div>
+                </section>
+
+                <section id="buildings-container" class="buildings-list">
+                    </section>
+            </div>
+
+
+            <div id="screen-forge" class="game-screen">
+                <div id="forge-locked" style="text-align: center; padding: 50px; color: #666; background: #1a1a1a; border-radius: 8px;">
+                    🔒 Кузница еще не построена. Купите её в Главном Центре.
+                </div>
+                
+                <div id="forge-content" style="display: none;">
+                    <section class="control-panel">
+                        <button id="forge-btn" class="btn success">
+                            Создать вещь (Цена: <span id="forge-cost">50</span>)
+                        </button>
+                    </section>
+
+                    <section class="inventory-section">
+                        <div id="inventory-grid" class="item-grid"></div>
+                    </section>
+                </div>
+            </div>
+
+            <div id="screen-barracks" class="game-screen">
+                <section class="barracks-section" style="background: #1a1a1a; padding: 15px; border-radius: 8px; border-top: 2px solid #0070dd;">
+                    <h3 style="margin-top: 0; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">
+                        ⚔️ Военные Казармы Сёгуната (В отряде: <span id="army-limit-counter">0</span>/10)
+                    </h3>
+                    <div id="barracks-ui-container" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                </section>
+            </div>
+
+            <div id="screen-market" class="game-screen">
+                <section class="market-section">
+                    <div id="market-system-grid" class="market-grid-3"></div>
+                    <div id="market-player-grid" class="market-grid-6"></div>
+                </section>
+            </div>
+
+            <div id="screen-combat" class="game-screen">
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <section class="combat-modes">
+                        <div class="mode-selection-box" style="background: #1e1e1e; padding: 10px; border-radius: 8px; border: 1px solid #333; display: flex; gap: 10px;">
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                                <div style="font-size: 0.75rem; font-weight: bold; color: #0070dd; text-align: center; text-transform: uppercase;">
+                                    ⚔️ <span id="combat-stage">Этап 1</span>
+                                </div>
+                                <button id="start-campaign-btn" class="btn success" style="width: 100%; padding: 8px 4px; font-size: 0.85rem; font-weight: bold;">В Кампанию</button>
+                            </div>
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                                <div style="font-size: 0.75rem; font-weight: bold; color: #ffd700; text-align: center; text-transform: uppercase;">
+                                    🏟️ Арена
+                                </div>
+                                <button id="start-duel-btn" class="btn primary" style="width: 100%; padding: 8px 4px; font-size: 0.85rem; font-weight: bold;">Найти дуэль</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="battle-zone">
+                        <div id="battle-container" style="background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333;">
+                            <div id="duel-enemy-meta" style="display: none; justify-content: space-between; margin-bottom: 8px; font-size: 0.8rem; color: #aaa; padding: 0 4px;">
+                                <div>Игрок: <span id="player-name" style="color: #00ff77;">Вы</span></div>
+                                <div style="color: #ff3333;">Враг: <span id="enemy-name">Поиск...</span></div>
+                            </div>
+                            <canvas id="battle-canvas" width="400" height="250" style="background: #111; border: 1px solid #222; width: 100%; border-radius: 4px; display: block;"></canvas>
+                            <div id="battle-status" style="color: #ffd700; margin-top: 8px; font-weight: bold; text-align: center; font-size: 0.85rem;">Ожидание приказа...</div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <div id="screen-leaderboard" class="game-screen">
+                <section class="leaderboard-section">
+                    <h2>Рейтинг кузнецов</h2>
+                    <div style="background: #1e1e1e; padding: 15px; border-radius: 8px;">
+                        <ol id="leaderboard-list" style="padding-left: 20px; list-style: none; margin: 0;"></ol>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

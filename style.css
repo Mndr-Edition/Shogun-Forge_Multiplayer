@@ -1,0 +1,485 @@
+/* ==========================================================================
+   БЛОК 1: СИСТЕМНЫЕ И КОРНЕВЫЕ СТИЛИ (Глобальное окружение)
+   ========================================================================== */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden; 
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+body {
+    background: #121212 url('https://raw.githubusercontent.com/Mndr-Edition/Sprites/main/oboi.png') no-repeat center center fixed; 
+    background-size: cover; 
+    color: #fff;
+    font-family: sans-serif;
+    padding: 8px; 
+    min-height: 100vh; 
+}
+
+/* ==========================================================================
+   БЛОК 2: ИНТЕРФЕЙС И НАВИГАЦИЯ (Хедер, Статистика, Табы)
+   ========================================================================== */
+.stats {
+    display: flex;
+    gap: 10px; 
+    background: none; 
+    padding: 0;
+    margin-bottom: 15px;
+}
+
+.stat-box {
+    display: flex;
+    align-items: center;
+    background: none !important; /* УБИРАЕТ БЛЯДСКУЮ КНОПКУ-ФОН НАМЕРТВО */
+    padding: 0 !important;       /* Сбрасывает конские отступы */
+    text-shadow: none !important;  /* Убирает тень */
+}
+
+/* Контейнер для золота (иконка + цифры) */
+.gold-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ffd700;
+}
+
+/* Счетчик золота */
+#gold-count {
+    font-size: 1.2rem;
+}
+
+/* Спрайт золота (увеличен) */
+.stat-icon {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.9));
+}
+
+/* Контейнер для дохода в секунду */
+.pps-aside {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #2ecc71;
+    font-size: 0.9rem;
+}
+
+.stat-label { 
+    color: #aaa; 
+    font-size: 0.85rem; 
+}
+
+/* Навигация (Табы) */
+.tabs-nav {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 15px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 8px 2px;
+    background: rgba(37, 37, 37, 0.9);
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.tab-btn.active {
+    background: #ffd700;
+    color: #000;
+    border-color: #ffd700;
+    font-weight: bold;
+}
+
+
+/* ==========================================================================
+   БЛОК 3: ИГРОВЫЕ КНОПКИ И ПАНЕЛИ УПРАВЛЕНИЯ
+   ========================================================================== */
+.control-panel {
+    display: flex;
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.btn {
+    flex: 1;
+    padding: 12px 4px; 
+    border: none;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-shadow: 1px 1px 2px #000; 
+    background: url('https://raw.githubusercontent.com/Mndr-Edition/Sprites/main/button.png') no-repeat center center;
+    background-size: 100% 100%; 
+    transition: transform 0.1s ease; 
+    min-width: 0; 
+}
+
+.btn:active { transform: scale(0.97); }
+.btn.primary { color: #ffd700; }
+.btn.success { color: #2ecc71; }
+.btn.danger { color: #ff4d4d; }
+
+
+/* ==========================================================================
+   БЛОК 4: СЕТКИ (Гриды под Инвентарь и Рынок)
+   ========================================================================== */
+.item-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 6px; 
+    width: 100%;
+}
+
+.market-grid-3, .market-grid-6 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 25px;
+}
+
+.game-screen { display: none; }
+.game-screen.active { display: block; }
+
+
+/* ==========================================================================
+   БЛОК 5: КАРТОЧКИ ПРЕДМЕТОВ (Базовая структура и контент)
+   ========================================================================== */
+.item-card {
+    background: #141414; /* Жесткий темный фон без прозрачности */
+    border-radius: 6px;
+    padding: 10px 6px; 
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    position: relative;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 2px solid #555555; /* Дефолтный бордер */
+}
+
+.item-card:hover { transform: translateY(-2px); }
+
+/* Статус экипировки (внутренняя неоновая подсветка, бордер перекрывается ниже) */
+.item-card.equipped {
+    background: #0f1e0f;
+    border-color: #00ff77;
+    box-shadow: inset 0 0 15px rgba(0, 255, 119, 0.2), 0 0 10px rgba(0, 255, 119, 0.1);
+}
+
+.item-info { margin-bottom: 10px; z-index: 2; }
+.item-name {
+    font-weight: bold;
+    font-size: 0.75rem; 
+    margin-bottom: 4px;
+    word-wrap: break-word; 
+    line-height: 1.2;
+}
+.item-stat {
+    font-size: 0.7rem;
+    color: #aaa;
+    margin-bottom: 0;
+}
+
+
+/* ==========================================================================
+   БЛОК 6: СИСТЕМА РЕДКОСТЕЙ (Чистый светящийся КОНТУР)
+   ========================================================================== */
+
+/* Статичные тиры */
+.item-card[data-rarity="common"]    { border-color: #555555; }
+.item-card[data-rarity="rare"]      { border-color: #1eff00; box-shadow: 0 0 12px rgba(30, 255, 0, 0.3); }
+
+/* Маска под рамку для анимированных тиров */
+.item-card[data-rarity="epic"]::before,
+.item-card[data-rarity="legendary"]::before,
+.item-card[data-rarity="mythic"]::before,
+.item-card[data-rarity="ancient"]::before {
+    content: '';
+    position: absolute;
+    inset: -2px; /* Ложится ровно на зону бордера снаружи */
+    border: 2px solid transparent;
+    border-radius: 6px;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude; /* Вырезает середину, оставляя градиент только на рамке в 2px */
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Убираем дефолтный бордер, чтобы не мешал маске */
+.item-card[data-rarity="epic"],
+.item-card[data-rarity="legendary"],
+.item-card[data-rarity="mythic"],
+.item-card[data-rarity="ancient"] {
+    border-color: transparent;
+}
+
+/* ЭПИЧЕСКИЙ (Синий неон по контуру) */
+.item-card[data-rarity="epic"]::before {
+    background: linear-gradient(135deg, #0070dd, #00c6ff, #0070dd);
+    background-size: 200% 200%;
+    animation: rotateGradient 4s linear infinite;
+}
+.item-card[data-rarity="epic"] { 
+    box-shadow: 0 0 15px rgba(0, 198, 255, 0.4); 
+}
+.item-card[data-rarity="epic"] .item-name { color: #00c6ff; text-shadow: 0 0 5px rgba(0,198,255,0.6); }
+
+/* ЛЕГЕНДАРНЫЙ (Пурпурный огонь по контуру) */
+.item-card[data-rarity="legendary"]::before {
+    background: linear-gradient(135deg, #a335ee, #ff00e5, #a335ee);
+    background-size: 200% 200%;
+    animation: rotateGradient 4s linear infinite;
+}
+.item-card[data-rarity="legendary"] { 
+    box-shadow: 0 0 20px rgba(255, 0, 229, 0.5); 
+}
+.item-card[data-rarity="legendary"] .item-name { color: #ff55ff; text-shadow: 0 0 5px rgba(255,85,255,0.6); }
+
+/* МИФИЧЕСКИЙ (Вулканическое свечение контура) */
+.item-card[data-rarity="mythic"]::before {
+    background: linear-gradient(45deg, #ff8000, #ffcc00, #ff3300, #ff8000);
+    background-size: 300% 300%;
+    animation: rotateGradient 2.5s linear infinite;
+}
+.item-card[data-rarity="mythic"] { 
+    box-shadow: 0 0 25px rgba(255, 51, 0, 0.6); 
+}
+.item-card[data-rarity="mythic"] .item-name { color: #ffaa00; text-shadow: 0 0 8px rgba(255,128,0,0.8); }
+
+/* ДРЕВНИЙ (Космический красный контур + пульс) */
+.item-card[data-rarity="ancient"]::before {
+    background: linear-gradient(45deg, #ff003c, #7000ff, #ff003c);
+    background-size: 200% 200%;
+    animation: rotateGradient 1.5s ease infinite;
+}
+.item-card[data-rarity="ancient"] { 
+    box-shadow: 0 0 30px rgba(255, 0, 60, 0.7);
+    animation: pulseAncient 2s infinite alternate;
+}
+.item-card[data-rarity="ancient"] .item-name { color: #ff003c; text-shadow: 0 0 10px rgba(255, 0, 60, 0.9); }
+
+
+/* ==========================================
+   БЛОК 7: КНОПКИ ВНУТРИ КАРТОЧЕК
+   ========================================== */
+.item-actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    margin-top: auto;
+    z-index: 2; /* Поверх рамки-маски */
+}
+
+.equip-btn {
+    width: 100%;
+    padding: 6px 2px;
+    background: #444;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.sell-btn {
+    width: 100%;
+    padding: 6px 2px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: url('https://raw.githubusercontent.com/Mndr-Edition/Sprites/main/button.png') no-repeat center center;
+    background-size: 100% 100%;
+    color: #ff4d4d;
+    text-shadow: 1px 1px 2px #000;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+
+/* ==========================================
+   БЛОК 8: АНИМАЦИОННЫЕ ТАЙМИНГИ (Keyframes)
+   ========================================== */
+@keyframes rotateGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes pulseAncient {
+    0% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 0, 60, 0.5); }
+    100% { transform: scale(1.02); box-shadow: 0 0 30px rgba(255, 0, 60, 0.8); }
+}
+
+/* ==========================================================================
+   БЛОК 9: СТРОГИЙ ТЕХНИЧЕСКИЙ РЕДИЗАЙН ЦЕНТРА
+   ========================================================================== */
+
+/* Общие панели */
+.dashboard-panel {
+    background: #161616;
+    border: 1px solid #282828;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.panel-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #222;
+    padding-bottom: 12px;
+}
+
+.panel-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.label {
+    font-size: 0.75rem;
+    color: #666;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.value {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+/* Моноширинный шрифт для предотвращения дергания текста при смене цифр */
+.technical {
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.growth {
+    color: #00ff77;
+    text-shadow: 0 0 8px rgba(0, 255, 119, 0.3);
+}
+
+/* Контейнер ползунка */
+.slider-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+/* Кастомный строгий ползунок */
+.tech-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: #222;
+    border-radius: 3px;
+    outline: none;
+    border: 1px solid #333;
+}
+
+.tech-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    background: #00ff77;
+    cursor: pointer;
+    box-shadow: 0 0 8px #00ff77;
+    border: none;
+}
+
+/* Строгие новые карточки строений */
+.tech-card {
+    background: #161616;
+    border: 1px solid #282828;
+    border-radius: 6px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.card-body {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.card-icon-frame {
+    width: 52px;
+    height: 52px;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-icon-frame img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+}
+
+.card-info {
+    flex: 1;
+}
+
+.card-title {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lvl-badge {
+    background: #252525;
+    color: #ffd700;
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid #444;
+}
+
+.card-desc {
+    font-size: 0.75rem;
+    color: #888;
+    line-height: 1.3;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+}
