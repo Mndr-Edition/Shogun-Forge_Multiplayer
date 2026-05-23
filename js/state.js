@@ -274,8 +274,13 @@ export const state = {
         return { unlocked: true };
     },
 
-    SellItemToMarket(id) {
-        window.socketService.send('CLIENT_SELL_ITEM', { id: id });
+        SellItemToMarket(id) {
+        if (window.socketService && window.socketService.ws && window.socketService.ws.readyState === WebSocket.OPEN) {
+            window.socketService.send('CLIENT_SELL_ITEM', { id: id });
+        } else {
+            console.error("[STATE] Ошибка продажи: Сокет закрыт или отсутствует.");
+            alert("Ошибка: Соединение с сервером прервано. Обнови страницу.");
+        }
     },
 
     BuySystemItem(index) {
@@ -435,7 +440,10 @@ export const state = {
         if (typeof barracksLogic !== 'undefined') barracksLogic.render();
         this.renderInventory();
         this.renderMarket();
-
+if (typeof barracksLogic !== 'undefined') {
+    barracksLogic.data = this.data; 
+    barracksLogic.render();
+}
         this.checkBuildingAccess();
         
         if (window.leaderboardService?.updateLocalPlayerGold) {
