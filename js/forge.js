@@ -1,4 +1,3 @@
-// === js/forge.js ===
 export const RARITY_CONFIG = {
     common:    { weight: 60, mult: 1.0, color: '#888' },
     rare:      { weight: 25, mult: 2.5, color: '#1eff00' }, 

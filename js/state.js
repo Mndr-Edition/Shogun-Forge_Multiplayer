@@ -232,10 +232,8 @@ addGold(amount) {
     
     if (this.data.gold < cost) return alert("Недостаточно золота для крафта!");
 
-    // ИСПРАВЛЕНО: Генерируем предмет через кузницу на клиенте
     const generatedItem = forge.rollWeapon(techLevel);
 
-    // Передаем готовый объект на сервер
     window.socketService.send('CLIENT_CRAFT_WEAPON', { 
         techLevel: techLevel,
         item: generatedItem 
@@ -321,7 +319,6 @@ addGold(amount) {
         const meta = document.getElementById('duel-enemy-meta');
         if (meta) meta.style.display = 'none';
 
-        // ГЕНЕРАЦИЯ АРМИИ БОТА: Жёсткий лимит 10 юнитов, рандомный пик
         const availableTypes = Object.keys(UNITS_CONFIG.types);
         const enemyArmyMap = {};
         
@@ -444,7 +441,7 @@ addGold(amount) {
 
         const clickPowerEl = document.getElementById('click-power-val');
 if (clickPowerEl) {
-    const forgeLvl = this.data.buildings?.forgeLevel || 0; // ИСПРАВЛЕНО: Теперь 0, а не 1
+    const forgeLvl = this.data.buildings?.forgeLevel || 0; 
     clickPowerEl.textContent = formatGold(1 + (forgeLvl * 5));
 }
 

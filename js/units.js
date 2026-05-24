@@ -1,26 +1,23 @@
-// === js/units.js ===
-
-// Матрица модификаторов: [Атакующий Тег] -> { [Тег Цели]: Множитель }
 const ICON_CDN = 'https://raw.githubusercontent.com/Mndr-Edition/Sprites/main/';
 
 export const DAMAGE_MUTATORS = {
     ninja: {
-        elite: 1.75 // Ниндзя срезают героев и элиту
+        elite: 1.75
     },
     spear: {
-        cavalry: 2.0 // Копейщики контрят коней
+        cavalry: 2.0 
     },
     matchclock: {
         samurai: 1.5,
-        elite: 1.4 // Огнестрел пробивает тяжелую броню
+        elite: 1.4 
     },
     bow: {
         infantry: 1.25,
-        cavalry: 0.6 // Лучники эффективны по пехоте, но слабы против коней
+        cavalry: 0.6 
     },
     siege: {
         infantry: 1.5,
-        cavalry: 0.5 // Осада бьет по площадям пехоты, по коням мажет
+        cavalry: 0.5 
     }
 };
 
@@ -63,25 +60,21 @@ hero_tetsubo: { name: "Герой с тэцубо", icon: "hero_tetsubo.png", ta
     mangonel: { name: "Мангонель", icon: "mangonel.png", tags: ["siege"], hp: 300, dmg: 180, cd: 220 }
 };
 
-// Конвейер нормализации данных
 export const UNITS_CONFIG = {
     maxTechLevel: 35,
     types: Object.entries(RAW_UNITS).reduce((acc, [id, data]) => {
         const tags = new Set(data.tags);
         
-        // Автоматическое распределение Melee / Ranged
         if (tags.has("bow") || tags.has("matchclock") || tags.has("siege")) {
             tags.add("ranged");
         } else {
             tags.add("melee");
         }
 
-        // Автоматическая разметка пехоты (все, кроме осады)
         if (!tags.has("siege")) {
             tags.add("infantry");
         }
 
-        // Выдергиваем чистое имя файла, игнорируя старые префиксы папок
         const fileName = data.icon.split('/').pop();
         const fullUrl = `${ICON_CDN}${fileName}`;
 
@@ -103,9 +96,6 @@ export const UNITS_CONFIG = {
     }, {})
 };
 
-/**
- * Расчет кастомного мутатора урона между атакующим и целью.
- */
 export function getDamageModifier(attackerId, targetId) {
     const attackerTags = UNITS_CONFIG.types[attackerId]?.tags || [];
     const targetTags = UNITS_CONFIG.types[targetId]?.tags || [];

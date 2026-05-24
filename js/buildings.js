@@ -1,4 +1,4 @@
-// === js/buildings.js ===
+
 const CDN = 'https://raw.githubusercontent.com/Mndr-Edition/Sprites/main/';
 export const BUILDINGS_CONFIG = {
 

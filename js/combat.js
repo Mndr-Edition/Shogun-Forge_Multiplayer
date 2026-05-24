@@ -58,7 +58,7 @@ export const combatLogic = {
 
 
     stop() {
-        this.isActive = false; // <-- Сбрасываем флаг
+        this.isActive = false; 
         if (this.loopId) {
             cancelAnimationFrame(this.loopId);
             this.loopId = null;
@@ -72,14 +72,12 @@ export const combatLogic = {
         start(playerArmy, enemyArmy, mode, onWin, onLose) {
         this.stop();
         this.isActive = true;
-        this.mode = mode; // Сначала фиксируем режим
+        this.mode = mode; 
 
-        // Динамически открываем нужный контейнер в зависимости от режима
         const containerId = (mode === 'duel') ? 'leaderboard-duel-container' : 'battle-container';
         const container = document.getElementById(containerId);
         if (container) container.style.display = 'block';
 
-        // Передаем mode внутрь initCanvas, чтобы он выбрал правильный canvas
         this.initCanvas(mode); 
         if (!this.canvas || !this.ctx) {
             return console.error("Критическая ошибка: Canvas или Context 2D не инициализированы!");
@@ -89,7 +87,6 @@ export const combatLogic = {
         
         const stage = (window.state && window.state.data) ? (window.state.data.stage || 1) : 1;
         
-        // Переключение базовой подложки: либо грязь, либо зима
         if (stage % 2 === 1) {
             this.currentBiome = 'dirt';
         } else {
@@ -157,15 +154,12 @@ export const combatLogic = {
         });
 
         const maxInRow = 5;
-        // Фиксируем высоту сетки по максимальному ряду (до 5 юнитов), чтобы не было вертикального сдвига шеренг
         const gridRowsCount = Math.min(maxInRow, flatArmy.length || maxInRow);
         const fixedStartY = cy - ((gridRowsCount * h + (gridRowsCount - 1) * gap) / 2);
 
         flatArmy.forEach((type, i) => {
             const row = Math.floor(i / maxInRow); 
             const col = i % maxInRow;             
-            
-            // Абсолютное позиционирование в структуре 5х2
             let x = (side === 'player') 
                 ? (cx - 50 - w) - row * (w + gap)
                 : (cx + 50) + row * (w + gap);
@@ -185,7 +179,7 @@ export const combatLogic = {
                 finalDmg += (techLvl - 1) * dmgStep;
             } else if (side === 'enemy') {
                 if (this.mode === 'campaign') {
-                    // Прокачка бота в кампании: уровень технологий равен текущему этапу игры
+
                     finalHp += (currentStage - 1) * hpStep;
                     finalDmg += (currentStage - 1) * dmgStep;
                 } else if (this.mode === 'duel') {
@@ -232,7 +226,7 @@ export const combatLogic = {
         this.entities.forEach(unit => {
             if (unit.cooldown <= 0) {
                 if (unit.type === 'monk_healer') {
-                    // ЛОГИКА ИСЦЕЛЕНИЯ: Цель — союзник с минимальным относительным здоровьем
+
                     const allies = this.entities.filter(e => e.side === unit.side && e.hp > 0);
                     if (allies.length > 0) {
                         const target = allies.reduce((min, current) => 
@@ -246,12 +240,10 @@ export const combatLogic = {
                         unit.offsetX = (dx / dist) * 12;
                         unit.offsetY = (dy / dist) * 12;
 
-                        // Накатываем хил (величина хила равна базовому dmg монаха)
                         target.hp = Math.min(target.maxHp, target.hp + unit.dmg);
                         target.healAlpha = 1.0;
                     }
                 } else {
-                    // ЛОГИКА АТАККИ
                     const targets = this.entities.filter(e => e.side !== unit.side && e.hp > 0);
                     if (targets.length > 0) {
                         const target = targets[Math.floor(Math.random() * targets.length)];
@@ -285,14 +277,12 @@ export const combatLogic = {
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Статичный фоллбек цвета фона
         this.ctx.fillStyle = this.currentBiome === 'winter' ? '#f2f5f8' : '#557a2b'; 
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         const tileSize = 64;
         const activeTile = environmentSprites[`tile_${this.currentBiome}`];
 
-        // Рендерим базовую сетку земли или снега
         if (activeTile && activeTile.complete && activeTile.naturalWidth > 0) {
             for (let x = 0; x < this.canvas.width; x += tileSize) {
                 for (let y = 0; y < this.canvas.height; y += tileSize) {
@@ -301,7 +291,6 @@ export const combatLogic = {
             }
         }
 
-        // РЕКА: Если этап кратен 3, пускаем вертикальную реку строго по центру холста
         const stage = (window.state && window.state.data) ? (window.state.data.stage || 1) : 1;
         if (stage % 3 === 0) {
             const waterTile = environmentSprites.tile_water;
@@ -331,13 +320,11 @@ export const combatLogic = {
             this.ctx.lineWidth = 1.5;
             this.ctx.strokeRect(unit.x, unit.y, w, h);
 
-            // Слой дамага (Красный всплеск)
             if (unit.bloodAlpha > 0) {
                 this.ctx.fillStyle = `rgba(220, 0, 0, ${unit.bloodAlpha * 0.5})`;
                 this.ctx.fillRect(unit.x, unit.y, w, h);
             }
 
-            // Слой хила (Зеленый всплеск)
             if (unit.healAlpha > 0) {
                 this.ctx.fillStyle = `rgba(0, 255, 119, ${unit.healAlpha * 0.5})`;
                 this.ctx.fillRect(unit.x, unit.y, w, h);
@@ -361,22 +348,20 @@ window.combatUI = {
             payload.playerArmy, 
             payload.enemyArmy, 
             payload.mode, 
-            // Callback победы:
             () => {
                 alert(`Победа над ${payload.opponentName}!`);
                 window.socketService.send('CLIENT_RESOLVE_CAMPAIGN', { 
                     win: true, 
                     stage: window.state.data.stage,
-                    mode: payload.mode // <--- Сюда
+                    mode: payload.mode
                 });
             },
-            // Callback поражения:
             () => {
                 alert("Поражение!");
                 window.socketService.send('CLIENT_RESOLVE_CAMPAIGN', { 
                     win: false, 
                     stage: window.state.data.stage,
-                    mode: payload.mode // <--- И сюда
+                    mode: payload.mod 
                 });
             }
         );

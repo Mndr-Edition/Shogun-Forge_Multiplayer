@@ -68,7 +68,6 @@ export const barracksLogic = {
     },
 
         render() {
-        // Мягкий выход, если метод вызван до инициализации DOM-структуры стейтом
         if (!this.isInitialized) return;
 
         const container = document.getElementById('barracks-ui-container');
@@ -81,11 +80,9 @@ export const barracksLogic = {
         Object.keys(UNITS_CONFIG.types).forEach(type => {
             const cfg = UNITS_CONFIG.types[type];
             
-            // 1. Фильтр по зданиям (Фог оф вар для карточек)
             const lockStatus = state.checkUnitUnlock(type);
-            if (!lockStatus.unlocked) return; // Скрываем карточку, если здание не построено / не прокачано
+            if (!lockStatus.unlocked) return; 
 
-            // 2. Фильтр по поисковой строке
             const matchesSearch = searchWords.every(word => {
                 const nameWords = cfg.name.toLowerCase().split(/\s+/);
                 const matchesName = nameWords.some(w => w.startsWith(word));
@@ -93,7 +90,6 @@ export const barracksLogic = {
                 return matchesName || matchesTags;
             });
             
-            // 3. Фильтр по выбранному тегу-табу
             const matchesTag = !this.selectedTag || cfg.tags.includes(this.selectedTag);
 
             if (!matchesSearch || !matchesTag) return;
