@@ -227,13 +227,21 @@ addGold(amount) {
     },
 
     Craft() {
-        const techLevel = this.data.buildings?.forgeLevel || 1;
-        const cost = forge.getCost(techLevel);
-        
-        if (this.data.gold < cost) return alert("Недостаточно золота для крафта!");
+    const techLevel = this.data.buildings?.forgeLevel || 1;
+    const cost = forge.getCost(techLevel);
+    
+    if (this.data.gold < cost) return alert("Недостаточно золота для крафта!");
 
-        window.socketService.send('CLIENT_CRAFT_WEAPON', { techLevel });
-    },
+    // ИСПРАВЛЕНО: Генерируем предмет через кузницу на клиенте
+    const generatedItem = forge.rollWeapon(techLevel);
+
+    // Передаем готовый объект на сервер
+    window.socketService.send('CLIENT_CRAFT_WEAPON', { 
+        techLevel: techLevel,
+        item: generatedItem 
+    });
+},
+
 
     checkUnitUnlock(type) {
         const cfg = UNITS_CONFIG.types[type];
@@ -297,12 +305,40 @@ addGold(amount) {
         window.socketService.send('CLIENT_START_BATTLE', { stage });
     },
 
-    StartCampaign() {
+        StartCampaign() {
         const totalUnits = Object.values(this.data.army).reduce((a, b) => a + b, 0);
         if (totalUnits === 0) return alert("Твоя армия пуста!");
 
-        window.socketService.send('CLIENT_START_CAMPAIGN', { stage: this.data.stage || 1 });
+        const currentStage = this.data.stage || 1;
+        
+        // Генерация вражеской матрицы локально для рендера
+        const enemyArmy = [
+            { type: 'ashigaru_spear', count: 5 + (currentStage * 2) },
+            { type: 'samurai_katana', count: Math.floor(currentStage / 2) }
+        ].filter(u => u.count > 0);
+
+        const playerArmy = Object.entries(this.data.army)
+            .map(([type, count]) => ({ type, count }))
+            .filter(u => u.count > 0);
+
+        // Передача потока в движок рендера
+        combatLogic.start(
+            playerArmy,
+            enemyArmy,
+            'campaign',
+            () => { 
+                // onWin callback
+                window.socketService.send('CLIENT_RESOLVE_CAMPAIGN', { win: true, stage: currentStage });
+            },
+            () => { 
+                // onLose callback
+                window.socketService.send('CLIENT_RESOLVE_CAMPAIGN', { win: false, stage: currentStage });
+                this.clearActiveArmy();
+                this.updateUI();
+            }
+        );
     },
+
 
     async startDuel() {
         const totalUnits = Object.values(this.data.army).reduce((a, b) => a + b, 0);
@@ -396,10 +432,10 @@ addGold(amount) {
         });
 
         const clickPowerEl = document.getElementById('click-power-val');
-        if (clickPowerEl) {
-            const forgeLvl = this.data.buildings?.forgeLevel || 1;
-            clickPowerEl.textContent = formatGold(1 + (forgeLvl * 5));
-        }
+if (clickPowerEl) {
+    const forgeLvl = this.data.buildings?.forgeLevel || 0; // ИСПРАВЛЕНО: Теперь 0, а не 1
+    clickPowerEl.textContent = formatGold(1 + (forgeLvl * 5));
+}
 
         const dateEl = document.getElementById('game-date');
         if (dateEl) {

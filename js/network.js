@@ -50,7 +50,7 @@ export const socketService = {
         });
     },
     
-    handleMessage(type, payload) {
+        handleMessage(type, payload) {
         if (!window.state) return;
 
         switch (type) {
@@ -58,31 +58,21 @@ export const socketService = {
             case 'SERVER_TICK':
                 window.state.syncWithServer(payload);
                 break;
+case 'SERVER_COMBAT_LOG':
+    if (window.combatUI) {
+        window.combatUI.startDuelVisuals(payload);
+    }
+    break;
             case 'SERVER_LEADERBOARD_DATA':
                 if (window.leaderboardService && typeof window.leaderboardService.updateData === 'function') {
                     window.leaderboardService.updateData(payload.players);
-                }
-                break;
-            case 'SERVER_BATTLE_RESULT':
-                console.log('Результат кампании:', payload);
-                if (payload.win) {
-                    alert(`Победа в кампании! Награда: ${payload.reward}💰`);
-                } else {
-                    alert('Поражение! Ваша регулярная армия разбита.');
-                }
-                break;
-            case 'SERVER_COMBAT_LOG':
-                console.log('[СЕТЬ] Получен боевой лог дуэли:', payload);
-                // Запуск визуализатора на Canvas, если модуль примонтирован к window
-                if (window.combatLogic && typeof window.combatLogic.start === 'function') {
-                    window.combatLogic.start(payload.playerArmy, payload.enemyArmy, payload.mode, payload.opponentName);
                 }
                 break;
             case 'SERVER_ALERT':
                 alert(payload.message);
                 break;
             default:
-                console.warn(`[СЕТЬ] Неизвестный тип пакета от сервера: ${type}`);
+                console.warn(`[СЕТЬ] Неизвестный или удаленный пакет: ${type}`);
         }
     },
 

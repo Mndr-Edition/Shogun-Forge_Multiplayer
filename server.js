@@ -227,37 +227,47 @@ case 'CLIENT_SELL_ITEM':
                     break;
                 }
                     
-                case 'CLIENT_START_CAMPAIGN': {
-                    if (!clientId || !db.players[clientId]) return;
-                    const p = db.players[clientId];
-                    const currentStage = p.stage || 1;
-                    
-                    const enemyArmy = generateEnemyArmy(currentStage);
-                    const battleResult = combatEngine.simulate(p.army, enemyArmy);
+                case 'CLIENT_RESOLVE_CAMPAIGN': {
+    if (!clientId || !db.players[clientId]) return;
+    const p = db.players[clientId];
+    
+    // Если это кампания, проверяем stage, чтобы предотвратить читерство
+    if (payload.mode === 'campaign' && payload.stage !== p.stage) return; 
 
-                    if (battleResult.win) {
-                        const reward = currentStage * 250;
-                        p.gold += reward;
-                        p.stage = currentStage + 1;
-                    } else {
-                        if (p.army) {
-                            Object.keys(p.army).forEach(type => p.army[type] = 0);
-                        }
-                    }
+    if (payload.win) {
+        if (payload.mode === 'campaign') {
+            const reward = p.stage * 250;
+            p.gold += reward;
+            p.stage += 1;
+            ws.send(JSON.stringify({ 
+                type: 'SERVER_ALERT', 
+                payload: { message: `Победа в кампании! Награда: ${reward}💰` } 
+            }));
+        } else if (payload.mode === 'duel') {
+            // Награда за дуэль (например, фиксированная или процент от золота врага)
+            const reward = 500; 
+            p.gold += reward;
+            ws.send(JSON.stringify({ 
+                type: 'SERVER_ALERT', 
+                payload: { message: `Победа в дуэли! Трофеи: ${reward}💰` } 
+            }));
+        }
+    } else {
+        // Логика поражения одинаковая для всех (армия обнуляется)
+        if (p.army) {
+            Object.keys(p.army).forEach(type => p.army[type] = 0);
+        }
+        ws.send(JSON.stringify({ 
+            type: 'SERVER_ALERT', 
+            payload: { message: `Поражение! Ваша армия разбита.` } 
+        }));
+    }
 
-                    saveDB();
-                    ws.send(JSON.stringify({ 
-                        type: 'SERVER_BATTLE_RESULT', 
-                        payload: { 
-                            win: battleResult.win,
-                            enemyArmy,
-                            reward: battleResult.win ? (currentStage * 250) : 0
-                        } 
-                    }));
-                    
-                    ws.send(JSON.stringify({ type: 'SERVER_STATE_SYNC', payload: getClientState(clientId) }));
-                    break;
-                }
+    saveDB();
+    ws.send(JSON.stringify({ type: 'SERVER_STATE_SYNC', payload: getClientState(clientId) }));
+    break;
+}
+
 
                 case 'CLIENT_SET_TAX':
                     if (clientId && db.players[clientId]) {

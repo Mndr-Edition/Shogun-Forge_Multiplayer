@@ -343,3 +343,30 @@ export const combatLogic = {
         });
     }
 };
+window.combatUI = {
+    startDuelVisuals(payload) {
+        combatLogic.start(
+            payload.playerArmy, 
+            payload.enemyArmy, 
+            payload.mode, 
+            // Callback победы:
+            () => {
+                alert(`Победа над ${payload.opponentName}!`);
+                window.socketService.send('CLIENT_RESOLVE_CAMPAIGN', { 
+                    win: true, 
+                    stage: window.state.data.stage,
+                    mode: payload.mode // <--- Сюда
+                });
+            },
+            // Callback поражения:
+            () => {
+                alert("Поражение!");
+                window.socketService.send('CLIENT_RESOLVE_CAMPAIGN', { 
+                    win: false, 
+                    stage: window.state.data.stage,
+                    mode: payload.mode // <--- И сюда
+                });
+            }
+        );
+    }
+};
