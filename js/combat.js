@@ -33,7 +33,8 @@ export const combatLogic = {
     lastTime: 0,
     timeAccumulator: 0,
     SIMULATION_TICK_MS: 45, 
-
+    isActive: false,
+    
     initCanvas() {
         this.canvas = document.getElementById('battle-canvas');
         if (!this.canvas) return;
@@ -52,6 +53,7 @@ export const combatLogic = {
     },
 
     stop() {
+        this.isActive = false; // <-- Сбрасываем флаг
         if (this.loopId) {
             cancelAnimationFrame(this.loopId);
             this.loopId = null;
@@ -64,7 +66,7 @@ export const combatLogic = {
 
     start(playerArmy, enemyArmy, mode, onWin, onLose) {
         this.stop();
-        
+        this.isActive = true;
         const container = document.getElementById('battle-container');
         if (container) container.style.display = 'block';
 

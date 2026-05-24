@@ -3,6 +3,7 @@ import { state } from './state.js';
 import { combatLogic } from './combat.js';
 import { leaderboardService } from './leaderboard.js';
 import { socketService } from './network.js';
+import { barracksLogic } from './barracks.js';
 
 window.state = state;
 window.socketService = socketService;
@@ -44,7 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     socketService.init();
     state.init();
-    
+    barracksLogic.init();
+
     // Принудительно генерируем / получаем имя игрока для авторизации
     const playerName = localStorage.getItem('shogun_name') || "Daimyo_" + Math.floor(Math.random() * 1000);
     localStorage.setItem('shogun_name', playerName);
@@ -114,18 +116,21 @@ document.addEventListener('DOMContentLoaded', () => {
         { btn: 'tab-leaderboard-btn', screen: 'screen-leaderboard', id: 'leaderboard' }
     ];
 
-    tabs.forEach(tab => {
+tabs.forEach(tab => {
         const btnEl = document.getElementById(tab.btn);
         if (btnEl) {
             btnEl.addEventListener('click', () => {
+                // 1. Сброс активных классов
                 tabs.forEach(t => {
                     document.getElementById(t.btn)?.classList.remove('active');
                     document.getElementById(t.screen)?.classList.remove('active');
                 });
                 
+                // 2. Активация выбранного таба
                 document.getElementById(tab.btn)?.classList.add('active');
-                document.getElementById(tab.screen)?.active || document.getElementById(tab.screen)?.classList.add('active');
+                document.getElementById(tab.screen)?.classList.add('active');
 
+                // 3. Вызов специфичной логики табов
                 if (tab.id === 'leaderboard') {
                     socketService.send('CLIENT_REQ_LEADERBOARD');
                 }
@@ -134,21 +139,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     state.updateUI();
                 }
 
-                if (tab.id !== 'combat') {
-                    if (combatLogic && typeof combatLogic.stop === 'function') {
-                        combatLogic.stop();
+                // 4. Синхронизация View и Controller для боевки
+                const container = document.getElementById('battle-container');
+                const placeholder = document.getElementById('combat-placeholder-desc');
+                
+                if (tab.id === 'combat') {
+                    // Пользователь вернулся во вкладку боя. Опрашиваем движок.
+                    if (combatLogic.isActive) {
+                        if (container) container.style.display = 'block';
+                        if (placeholder) placeholder.style.display = 'none';
+                    } else {
+                        if (container) container.style.display = 'none';
+                        if (placeholder) placeholder.style.display = 'block';
                     }
-                    
-                    const container = document.getElementById('battle-container');
-                    const placeholder = document.getElementById('combat-placeholder-desc');
-                    
+                } else {
+                    // Пользователь ушел в другую вкладку. 
+                    // ДВИЖОК НЕ ОСТАНАВЛИВАЕМ. Скрываем только UI (контейнер канваса).
                     if (container) container.style.display = 'none';
-                    if (placeholder) placeholder.style.display = 'block';
-                    
-                    const bBtn = document.getElementById('start-campaign-btn');
-                    const dBtn = document.getElementById('start-duel-btn');
-                    if (bBtn) bBtn.disabled = false;
-                    if (dBtn) dBtn.disabled = false;
                 }
             });
         }

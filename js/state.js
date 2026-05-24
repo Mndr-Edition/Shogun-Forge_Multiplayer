@@ -93,9 +93,9 @@ export const state = {
         this.updateUI();
     },
 
-    addGold(amount) {
-        window.socketService.send('CLIENT_CLICK_GOLD', { amount });
-    },
+addGold(amount) {
+    window.socketService.send('CLIENT_ADD_GOLD', { amount });
+},
 
     getUnitCost(type) {
         const cfg = UNITS_CONFIG.types[type];

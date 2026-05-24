@@ -147,6 +147,47 @@ wss.on('connection', (ws) => {
             const { type, payload } = packet;
 
             switch (type) {
+              
+              case 'CLIENT_BUY_SYSTEM_ITEM':
+    if (clientId && db.players[clientId]) {
+        const p = db.players[clientId];
+        const index = payload.index;
+        const slot = p.market?.systemSlots?.[index];
+
+        if (slot && slot.item) {
+            // Бэк должен сам считать цену (защита от инъекций), 
+            // пока берем базовую логику клиента
+            const price = Math.floor(slot.item.basePrice * 1.5); 
+            if (p.gold >= price) {
+                p.gold -= price;
+                if (!p.inventory) p.inventory = [];
+                p.inventory.push(slot.item);
+                p.market.systemSlots[index] = { cooldown: 60 }; // Удалили айтем, поставили кд
+                saveDB();
+                ws.send(JSON.stringify({ type: 'SERVER_STATE_SYNC', payload: getClientState(clientId) }));
+            }
+        }
+    }
+    break;
+
+case 'CLIENT_SELL_ITEM':
+    if (clientId && db.players[clientId]) {
+        const p = db.players[clientId];
+        const itemId = payload.id;
+        
+        if (!p.inventory) break;
+        const itemIndex = p.inventory.findIndex(i => i.id === itemId);
+
+        if (itemIndex !== -1) {
+            const item = p.inventory[itemIndex];
+            p.inventory.splice(itemIndex, 1);
+            p.gold += item.basePrice; // Или логика добавления лота в playerSlots
+            saveDB();
+            ws.send(JSON.stringify({ type: 'SERVER_STATE_SYNC', payload: getClientState(clientId) }));
+        }
+    }
+    break;
+
                 case 'CLIENT_AUTH': {
                     let player = Object.values(db.players).find(p => p.name === payload.name);
                     
@@ -277,6 +318,90 @@ wss.on('connection', (ws) => {
                         }
                     }
                     break;
+
+case 'CLIENT_ADD_GOLD': // Создай новый кейс для наград
+    if (clientId && db.players[clientId]) {
+        const amount = Number(payload.amount);
+        if (!isNaN(amount) && amount > 0) {
+            db.players[clientId].gold += amount;
+            saveDB();
+            ws.send(JSON.stringify({ type: 'SERVER_STATE_SYNC', payload: getClientState(clientId) }));
+        }
+    }
+    break;
+
+case 'CLIENT_BUY_UNIT':
+    if (clientId && db.players[clientId]) {
+        const p = db.players[clientId];
+        const { type: unitType, cost } = payload;
+        if (p.gold >= cost) {
+            p.gold -= cost;
+            if (!p.reserve) p.reserve = {};
+            p.reserve[unitType] = (p.reserve[unitType] || 0) + 1;
+            
+            saveDB();
+            ws.send(JSON.stringify({ type: 'SERVER_STATE_SYNC', payload: getClientState(clientId) }));
+        }
+    }
+    break;
+
+case 'CLIENT_UPGRADE_TECH':
+    if (clientId && db.players[clientId]) {
+        const p = db.players[clientId];
+        const { type: unitType, cost } = payload;
+        if (p.gold >= cost) {
+            p.gold -= cost;
+            if (!p.unitTech) p.unitTech = {};
+            p.unitTech[unitType] = (p.unitTech[unitType] || 1) + 1;
+            
+            saveDB();
+            ws.send(JSON.stringify({ type: 'SERVER_STATE_SYNC', payload: getClientState(clientId) }));
+        }
+    }
+    break;
+
+case 'CLIENT_TOGGLE_UNIT':
+    if (clientId && db.players[clientId]) {
+        const p = db.players[clientId];
+        const { type: unitType, isDeploy } = payload;
+        
+        if (!p.reserve) p.reserve = {};
+        if (!p.army) p.army = {};
+        
+        if (isDeploy) {
+            // Переброс из резерва в активную армию
+            if ((p.reserve[unitType] || 0) > 0) {
+                p.reserve[unitType] -= 1;
+                p.army[unitType] = (p.army[unitType] || 0) + 1;
+            }
+        } else {
+            // Из армии обратно в резерв
+            if ((p.army[unitType] || 0) > 0) {
+                p.army[unitType] -= 1;
+                p.reserve[unitType] = (p.reserve[unitType] || 0) + 1;
+            }
+        }
+        saveDB();
+        ws.send(JSON.stringify({ type: 'SERVER_STATE_SYNC', payload: getClientState(clientId) }));
+    }
+    break;
+
+case 'CLIENT_CLEAR_ARMY':
+    // Возврат всех юнитов в резерв при поражении (вызывается из startDuel)
+    if (clientId && db.players[clientId]) {
+        const p = db.players[clientId];
+        if (p.army) {
+            if (!p.reserve) p.reserve = {};
+            Object.keys(p.army).forEach(unit => {
+                p.reserve[unit] = (p.reserve[unit] || 0) + (p.army[unit] || 0);
+                p.army[unit] = 0;
+            });
+        }
+        saveDB();
+        ws.send(JSON.stringify({ type: 'SERVER_STATE_SYNC', payload: getClientState(clientId) }));
+    }
+    break;
+
 
                 case 'CLIENT_REQ_LEADERBOARD':
                     broadcastLeaderboard();
