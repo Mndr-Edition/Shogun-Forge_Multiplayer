@@ -107,22 +107,16 @@
 
             <div id="screen-combat" class="game-screen">
                 <div style="display: flex; flex-direction: column; gap: 15px;">
-                    <section class="combat-modes">
-                        <div class="mode-selection-box" style="background: #1e1e1e; padding: 10px; border-radius: 8px; border: 1px solid #333; display: flex; gap: 10px;">
-                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-                                <div style="font-size: 0.75rem; font-weight: bold; color: #0070dd; text-align: center; text-transform: uppercase;">
-                                    ⚔️ <span id="combat-stage">Этап 1</span>
-                                </div>
-                                <button id="start-campaign-btn" class="btn success" style="width: 100%; padding: 8px 4px; font-size: 0.85rem; font-weight: bold;">В Кампанию</button>
-                            </div>
-                            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
-                                <div style="font-size: 0.75rem; font-weight: bold; color: #ffd700; text-align: center; text-transform: uppercase;">
-                                    🏟️ Арена
-                                </div>
-                                <button id="start-duel-btn" class="btn primary" style="width: 100%; padding: 8px 4px; font-size: 0.85rem; font-weight: bold;">Найти дуэль</button>
-                            </div>
-                        </div>
-                    </section>
+<section class="combat-modes">
+    <div class="mode-selection-box" style="background: #1e1e1e; padding: 10px; border-radius: 8px; border: 1px solid #333; display: flex; gap: 10px;">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+            <div style="font-size: 0.75rem; font-weight: bold; color: #0070dd; text-align: center; text-transform: uppercase;">
+                ⚔️ <span id="combat-stage">Этап 1</span>
+            </div>
+            <button id="start-campaign-btn" class="btn success" style="width: 100%; padding: 8px 4px; font-size: 0.85rem; font-weight: bold;">В Кампанию</button>
+        </div>
+    </div>
+</section>
 
                     <section class="battle-zone">
                         <div id="battle-container" style="background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333;">
@@ -143,8 +137,19 @@
                     <div style="background: #1e1e1e; padding: 15px; border-radius: 8px;">
                         <ol id="leaderboard-list" style="padding-left: 20px; list-style: none; margin: 0;"></ol>
                     </div>
+                    
+                    <div id="leaderboard-duel-container" style="background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #ff3333; margin-top: 15px; display: none;">
+                        <div id="lb-duel-enemy-meta" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.8rem; color: #aaa; padding: 0 4px;">
+                            <div>Игрок: <span style="color: #00ff77;">Вы</span></div>
+                            <div style="color: #ff3333;">Враг: <span id="lb-enemy-name">Поиск...</span></div>
+                        </div>
+                        <canvas id="leaderboard-battle-canvas" width="400" height="250" style="background: #111; border: 1px solid #222; width: 100%; border-radius: 4px; display: block;"></canvas>
+                        <div id="lb-battle-status" style="color: #ffd700; margin-top: 8px; font-weight: bold; text-align: center; font-size: 0.85rem;">Ожидание приказа...</div>
+                    </div>
                 </section>
             </div>
+
+
         </main>
     </div>
 

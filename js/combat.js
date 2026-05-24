@@ -35,13 +35,17 @@ export const combatLogic = {
     SIMULATION_TICK_MS: 45, 
     isActive: false,
     
-    initCanvas() {
-        this.canvas = document.getElementById('battle-canvas');
+        initCanvas(mode) {
+        const isDuel = (mode === 'duel');
+        const canvasId = isDuel ? 'leaderboard-battle-canvas' : 'battle-canvas';
+        const containerId = isDuel ? 'leaderboard-duel-container' : 'battle-container';
+
+        this.canvas = document.getElementById(canvasId);
         if (!this.canvas) return;
 
         this.ctx = this.canvas.getContext('2d');
         
-        const container = document.getElementById('battle-container');
+        const container = document.getElementById(containerId);
         const targetWidth = this.canvas.clientWidth || (container ? container.clientWidth : 0) || 600;
         const targetHeight = this.canvas.clientHeight || (container ? container.clientHeight : 0) || 350;
 
@@ -51,6 +55,7 @@ export const combatLogic = {
         this.canvas.style.width = `${targetWidth}px`;
         this.canvas.style.height = `${targetHeight}px`;
     },
+
 
     stop() {
         this.isActive = false; // <-- Сбрасываем флаг
@@ -64,19 +69,23 @@ export const combatLogic = {
         }
     },
 
-    start(playerArmy, enemyArmy, mode, onWin, onLose) {
+        start(playerArmy, enemyArmy, mode, onWin, onLose) {
         this.stop();
         this.isActive = true;
-        const container = document.getElementById('battle-container');
+        this.mode = mode; // Сначала фиксируем режим
+
+        // Динамически открываем нужный контейнер в зависимости от режима
+        const containerId = (mode === 'duel') ? 'leaderboard-duel-container' : 'battle-container';
+        const container = document.getElementById(containerId);
         if (container) container.style.display = 'block';
 
-        this.initCanvas();
+        // Передаем mode внутрь initCanvas, чтобы он выбрал правильный canvas
+        this.initCanvas(mode); 
         if (!this.canvas || !this.ctx) {
             return console.error("Критическая ошибка: Canvas или Context 2D не инициализированы!");
         }
 
         this.canvas.style.display = 'block';
-        this.mode = mode;
         
         const stage = (window.state && window.state.data) ? (window.state.data.stage || 1) : 1;
         
@@ -128,7 +137,8 @@ export const combatLogic = {
         this.loopId = requestAnimationFrame(tick);
     },
 
-    buildDynamicGrid(armyData, side) {
+
+        buildDynamicGrid(armyData, side) {
         const cx = this.canvas.width / 2;
         const cy = this.canvas.height / 2;
         const gap = 4; 
@@ -136,7 +146,6 @@ export const combatLogic = {
         const h = 32;
 
         const currentStage = (window.state && window.state.data) ? (window.state.data.stage || 1) : 1;
-        const campaignModifier = (this.mode === 'campaign' && side === 'enemy') ? 1 + (currentStage - 1) * 0.15 : 1;
 
         const flatArmy = [];
         armyData.forEach(g => {
@@ -148,38 +157,40 @@ export const combatLogic = {
         });
 
         const maxInRow = 5;
+        // Фиксируем высоту сетки по максимальному ряду (до 5 юнитов), чтобы не было вертикального сдвига шеренг
+        const gridRowsCount = Math.min(maxInRow, flatArmy.length || maxInRow);
+        const fixedStartY = cy - ((gridRowsCount * h + (gridRowsCount - 1) * gap) / 2);
 
         flatArmy.forEach((type, i) => {
             const row = Math.floor(i / maxInRow); 
             const col = i % maxInRow;             
             
-            const unitsInThisRow = Math.min(maxInRow, flatArmy.length - row * maxInRow);
-            const startY = cy - ((unitsInThisRow * h + (unitsInThisRow - 1) * gap) / 2);
-
-            // Сдвигаем сетку дальше от центра, освобождая место под вертикальную реку (ширина ~64px)
+            // Абсолютное позиционирование в структуре 5х2
             let x = (side === 'player') 
                 ? (cx - 50 - w) - row * (w + gap)
                 : (cx + 50) + row * (w + gap);
 
-            const y = startY + col * (h + gap);
+            const y = fixedStartY + col * (h + gap);
 
             const cfg = UNITS_CONFIG.types[type];
             let finalHp = cfg.baseHp;
             let finalDmg = cfg.baseDmg;
 
+            const hpStep = cfg.upgrade?.hpStep ? cfg.upgrade.hpStep : Math.ceil(cfg.baseHp * 0.1);
+            const dmgStep = cfg.upgrade?.dmgStep ? cfg.upgrade.dmgStep : Math.ceil(cfg.baseDmg * 0.1);
+
             if (side === 'player') {
                 const techLvl = (window.state && window.state.data && window.state.data.unitTech) ? (window.state.data.unitTech[type] || 1) : 1;
-                finalHp += (techLvl - 1) * cfg.upgrade.hpStep;
-                finalDmg += (techLvl - 1) * cfg.upgrade.dmgStep;
+                finalHp += (techLvl - 1) * hpStep;
+                finalDmg += (techLvl - 1) * dmgStep;
             } else if (side === 'enemy') {
                 if (this.mode === 'campaign') {
-                    finalHp = Math.floor(finalHp * campaignModifier);
-                    finalDmg = Math.floor(finalDmg * campaignModifier);
+                    // Прокачка бота в кампании: уровень технологий равен текущему этапу игры
+                    finalHp += (currentStage - 1) * hpStep;
+                    finalDmg += (currentStage - 1) * dmgStep;
                 } else if (this.mode === 'duel') {
                     const maxStage = Math.min(currentStage || 1, UNITS_CONFIG.maxTechLevel || 35);
                     const mockTechLvl = Math.max(1, Math.floor(Math.random() * maxStage) + 1);
-                    const hpStep = cfg.upgrade?.hpStep ? cfg.upgrade.hpStep : Math.ceil(cfg.baseHp * 0.1);
-                    const dmgStep = cfg.upgrade?.dmgStep ? cfg.upgrade.dmgStep : Math.ceil(cfg.baseDmg * 0.1);
                     finalHp += (mockTechLvl - 1) * hpStep;
                     finalDmg += (mockTechLvl - 1) * dmgStep;
                 }
@@ -209,6 +220,7 @@ export const combatLogic = {
             });
         });
     },
+
 
     updateSimulation(onWin, onLose) {
         const playersAlive = this.entities.some(e => e.side === 'player' && e.hp > 0);

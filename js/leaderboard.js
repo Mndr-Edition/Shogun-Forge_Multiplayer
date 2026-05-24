@@ -1,6 +1,5 @@
-// === js/leaderboard.js ===
 import { state } from './state.js';
-import { socketService } from './network.js'; // ИСПРАВЛЕНО: Импортируем из network.js, а не app.js
+import { socketService } from './network.js';
 
 const formatLeaderboardGold = (num) => {
     const n = parseFloat(num);
@@ -42,7 +41,7 @@ export const leaderboardService = {
                     </div>
                     ${!isLocal ? `
                         <button 
-                            onclick="window.startDuelWith('${p.id || p.name}')"
+                            onclick="window.startDuelWith('${p.id || p.name}', '${p.name}')"
                             style="background: #ff3333; color: #fff; border: 1px solid #ff4d4d; padding: 2px 8px; font-family: monospace; cursor: pointer; font-size: 11px;"
                         >
                             ДУЭЛЬ
@@ -54,11 +53,15 @@ export const leaderboardService = {
     }
 };
 
-window.startDuelWith = (targetId) => {
-    const placeholder = document.getElementById('combat-placeholder-desc');
-    const container = document.getElementById('battle-container');
-    if (placeholder) placeholder.style.display = 'none';
+window.startDuelWith = (targetId, targetName) => {
+    const container = document.getElementById('leaderboard-duel-container');
     if (container) container.style.display = 'block';
+
+    const enemyName = document.getElementById('lb-enemy-name');
+    if (enemyName) enemyName.textContent = targetName;
+
+    const status = document.getElementById('lb-battle-status');
+    if (status) status.textContent = "Запрос боя у сервера...";
 
     console.log(`[ДУЭЛЬ] Запрос боя против: ${targetId}`);
     socketService.send('CLIENT_START_DUEL', { targetPlayerId: targetId });

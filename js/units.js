@@ -32,7 +32,7 @@ const RAW_UNITS = {
     
     samurai: { name: "Самурай с катаной", icon: "samurai.png", tags: ["samurai", "katana"], hp: 220, dmg: 45, cd: 70 },
     samurai_bow: { name: "Самурай-лучник", icon: "samurai_bow.png", tags: ["samurai", "bow"], hp: 180, dmg: 38, cd: 90 },
-    samurai_matchlock: { name: "Самурай с ручницей", icon: "samurai_matchlock.png", tags: ["samurai", "matchclock"], hp: 200, dmg: 55, cd: 140 },
+    samurai_matchlock: { name: "Самурай с ручницей", icon: "samurai_mathclock.png", tags: ["samurai", "matchclock"], hp: 200, dmg: 55, cd: 140 },
     nodachi_samurai: { name: "Самурай с нодати", icon: "nodachi_samurai.png", tags: ["samurai", "katana", "elite"], hp: 250, dmg: 65, cd: 95 },
     date_spear: { name: "Копейщик клана Датэ", icon: "date_spear.png", tags: ["samurai", "spear"], hp: 240, dmg: 40, cd: 75 },
     
@@ -51,7 +51,7 @@ const RAW_UNITS = {
     hero_bow: { name: "Герой-лучник", icon: "hero_bow.png", tags: ["elite", "bow"], hp: 400, dmg: 80, cd: 80 },
     hero_katana: { name: "Герой с катаной", icon: "hero_katana.png", tags: ["elite", "katana"], hp: 500, dmg: 110, cd: 60 },
     hero_spear: { name: "Герой с копьем", icon: "hero_spear.png", tags: ["elite", "spear"], hp: 480, dmg: 95, cd: 65 },
-    hero_tetsubo: { name: "Герой с тэцубо", icon: "elite", tags: ["elite", "melee"], hp: 600, dmg: 130, cd: 110 },
+hero_tetsubo: { name: "Герой с тэцубо", icon: "hero_tetsubo.png", tags: ["elite", "melee"], hp: 600, dmg: 130, cd: 110 },
     
     benkei_blades: { name: "Бэнкей (Мастер клинков)", icon: "benkei_blades.png", tags: ["elite", "katana"], hp: 550, dmg: 100, cd: 70 },
     tokitakas_tanegashima: { name: "Танегасима Токитаки", icon: "tokitakas_tanegashima.png", tags: ["elite", "matchclock"], hp: 420, dmg: 140, cd: 160 },

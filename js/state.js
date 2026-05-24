@@ -305,40 +305,51 @@ addGold(amount) {
         window.socketService.send('CLIENT_START_BATTLE', { stage });
     },
 
-        StartCampaign() {
+            StartCampaign() {
         const totalUnits = Object.values(this.data.army).reduce((a, b) => a + b, 0);
         if (totalUnits === 0) return alert("Твоя армия пуста!");
 
         const currentStage = this.data.stage || 1;
+        const container = document.getElementById('battle-container');
+        const battleZone = document.querySelector('.battle-zone');
         
-        // Генерация вражеской матрицы локально для рендера
-        const enemyArmy = [
-            { type: 'ashigaru_spear', count: 5 + (currentStage * 2) },
-            { type: 'samurai_katana', count: Math.floor(currentStage / 2) }
-        ].filter(u => u.count > 0);
+        if (battleZone && container) {
+            battleZone.appendChild(container);
+            container.style.display = 'block';
+        }
+
+        const meta = document.getElementById('duel-enemy-meta');
+        if (meta) meta.style.display = 'none';
+
+        // ГЕНЕРАЦИЯ АРМИИ БОТА: Жёсткий лимит 10 юнитов, рандомный пик
+        const availableTypes = Object.keys(UNITS_CONFIG.types);
+        const enemyArmyMap = {};
+        
+        for (let i = 0; i < 10; i++) {
+            const randomType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+            enemyArmyMap[randomType] = (enemyArmyMap[randomType] || 0) + 1;
+        }
+
+        const enemyArmy = Object.entries(enemyArmyMap).map(([type, count]) => ({ type, count }));
 
         const playerArmy = Object.entries(this.data.army)
             .map(([type, count]) => ({ type, count }))
             .filter(u => u.count > 0);
 
-        // Передача потока в движок рендера
         combatLogic.start(
             playerArmy,
             enemyArmy,
             'campaign',
             () => { 
-                // onWin callback
-                window.socketService.send('CLIENT_RESOLVE_CAMPAIGN', { win: true, stage: currentStage });
+                window.socketService.send('CLIENT_RESOLVE_CAMPAIGN', { win: true, stage: currentStage, mode: 'campaign' });
             },
             () => { 
-                // onLose callback
-                window.socketService.send('CLIENT_RESOLVE_CAMPAIGN', { win: false, stage: currentStage });
+                window.socketService.send('CLIENT_RESOLVE_CAMPAIGN', { win: false, stage: currentStage, mode: 'campaign' });
                 this.clearActiveArmy();
                 this.updateUI();
             }
         );
     },
-
 
     async startDuel() {
         const totalUnits = Object.values(this.data.army).reduce((a, b) => a + b, 0);
